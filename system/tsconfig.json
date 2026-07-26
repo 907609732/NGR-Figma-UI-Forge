@@ -13,7 +13,6 @@
     "moduleResolution": "Bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "jsx": "react-jsx",
     "types": ["@figma/plugin-typings"]
   },
   "include": ["src", "scripts"]
