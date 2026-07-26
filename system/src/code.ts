@@ -14,7 +14,6 @@ import {
   type TranslateSettings,
   type UiToPluginMessage,
   type VariantBaseMode,
-  type VariantMode,
   type VariantStyleMode
 } from "./shared";
 
