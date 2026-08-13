@@ -633,8 +633,10 @@ function arrangeVariantSet(componentSet: ComponentSetNode) {
 }
 
 function variantColumns(definitions: VariantDefinition[]): number {
-  const stateCount = uniqueVariantValues(definitions, "State").length || 1;
-  return Math.max(1, Math.ceil(definitions.length / stateCount));
+  const stateCount = new Set(
+    definitions.map((definition) => definition.State).filter((value): value is string => Boolean(value))
+  ).size;
+  return Math.max(1, stateCount);
 }
 
 function variantSortValue(definition: VariantDefinition): number {
@@ -648,10 +650,6 @@ function variantOrderIndex(order: string[], value: string | undefined): number {
   if (!value) return 0;
   const index = order.indexOf(value);
   return index >= 0 ? index : order.length;
-}
-
-function uniqueVariantValues(definitions: VariantDefinition[], key: keyof VariantDefinition): string[] {
-  return Array.from(new Set(definitions.map((definition) => definition[key]).filter((value): value is string => Boolean(value))));
 }
 
 async function insertTemplate(templateId: string, config: PluginConfig): Promise<{ name: string }> {
