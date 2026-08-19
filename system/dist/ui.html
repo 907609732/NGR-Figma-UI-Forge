@@ -103,6 +103,8 @@
       .variant-buttons .variant-compact small { display: none; }
       .variant-buttons button.active { border-color: var(--figma-color-border-brand, #0d99ff); background: var(--figma-color-bg-brand, #0d99ff); color: var(--figma-color-text-onbrand, #fff); }
       .variant-summary { color: var(--figma-color-text-secondary, #777); font-size: 11px; }
+      .variant-state-layer-option { display: grid; gap: 3px; padding: 7px 8px; border: 1px solid var(--figma-color-border, #ddd); border-radius: 7px; }
+      .variant-state-layer-option.is-disabled { opacity: .58; }
       .template-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
       .template-toolbar { display: flex; justify-content: flex-end; gap: 6px; }
       .template-toolbar button { width: auto; min-width: 72px; }
@@ -339,6 +341,10 @@
               <button data-variant-style="complete" title="添加 Style=Normal、Style=Complete"><strong>常态和完成</strong><small>Style=Normal / Complete</small></button>
               <button data-variant-style="rank" title="添加 Style=1st、Style=2nd、Style=3rd"><strong>排名</strong><small>Style=1st / 2nd / 3rd</small></button>
             </div>
+            <div id="variantStateLayerOption" class="variant-state-layer-option">
+              <label class="check"><input id="variantStateLayerVisibilityEnabled" type="checkbox">按节点名切换状态层</label>
+              <small id="variantStateLayerHint">递归精确匹配 Hover、Pressed、Disabled；Pressed 会同时打开 Hover。</small>
+            </div>
             <button id="createVariantComboBtn" class="primary">生成变体</button>
             <small id="variantComboSummary" class="variant-summary">请选择基础状态和附加 Style。</small>
           </div>
@@ -349,7 +355,7 @@
         <h2>软件信息</h2>
         <div class="panel settings-card">
           <div class="meta">
-            <span id="versionText">V0.1.53 · 更新于 2026-08-04</span>
+            <span id="versionText">V0.1.54 · 更新于 2026-08-19</span>
             <span>By五成</span>
             <a id="websiteLink" href="https://ai-auto-namer-figma.chenyuecai.chatgpt.site" target="_blank" rel="noopener noreferrer">官方网站</a>
             <a id="lexiconLink" href="https://github.com/907609732/FigamTool" target="_blank" rel="noopener noreferrer">词库链接</a>
@@ -409,6 +415,22 @@
             <li>跳转按钮 + 常态和完成：6 个变体</li>
             <li>选择按钮 + 排名：18 个变体</li>
           </ul>
+          <h3>按节点名切换状态层（可选）</h3>
+          <p>仅在选中 Frame 或独立 Component 新建变体时生效。插件会递归检查全部后代，忽略大小写和首尾空格，只精确匹配 Hover、Pressed、Disabled；例如 Icon_Hover 不会匹配。同名节点会全部处理，节点不存在时会跳过且不报错。</p>
+          <ul>
+            <li>State=Normal：关闭 Hover、Pressed、Disabled。</li>
+            <li>State=Hover：只打开 Hover。</li>
+            <li>State=Pressed：打开 Hover，同时打开 Pressed（如有）。</li>
+            <li>State=Disabled：只打开 Disabled（如有）。</li>
+          </ul>
+          <p>选择按钮的 Checked 与 Unchecked 使用同一套 State 规则：</p>
+          <ul>
+            <li>State=Pressed, Checked=Checked / Unchecked：打开 Hover 和 Pressed（如有）。</li>
+            <li>State=Hover, Checked=Checked / Unchecked：只打开 Hover。</li>
+            <li>State=Normal, Checked=Checked / Unchecked：关闭全部状态层。</li>
+            <li>8 状态模式的 State=Disabled：只打开 Disabled（如有）。</li>
+          </ul>
+          <p>仅 Style 模式和已有 Component Set 追加 Style 不使用该选项；关闭选项时完全保留原有可见性。</p>
           <button id="closeVariantHelpBtn">关闭</button>
         </div>
       </div>
@@ -575,7 +597,8 @@
             removeMaskNodes: true,
             addTextControlProperties: false,
             addImageControlProperties: false
-          }
+          },
+          variantStateLayerVisibilityEnabled: false
         };
       }
       function defaultTemplates() {
@@ -633,6 +656,7 @@
         });
         if (!config.propertyPresets.some(function(preset) { return preset.id === config.activePropertyPresetId; })) config.activePropertyPresetId = config.propertyPresets[0].id;
         if (config.applyPropertiesOnRename == null) config.applyPropertiesOnRename = true;
+        if (config.variantStateLayerVisibilityEnabled == null) config.variantStateLayerVisibilityEnabled = false;
         config.templates = normalizeTemplates(config.templates, fallback.templates);
         config.aiSettings = Object.assign({}, fallback.aiSettings, config.aiSettings || {});
         if (!config.aiSettings.apiKey && localTestConfig && localTestConfig.aiSettings) Object.assign(config.aiSettings, localTestConfig.aiSettings);
@@ -1078,16 +1102,52 @@
       function variantStyleLabel(mode) {
         return { none: "不添加 Style", complete: "Style 2", rank: "Style 3" }[mode] || "不添加 Style";
       }
+      function variantSelectionType() {
+        return selection.count === 1 && selection.roots.length === 1 ? selection.roots[0].type : "";
+      }
+      function variantSelectionParentType() {
+        return selection.count === 1 && selection.roots.length === 1 ? selection.roots[0].parentType : "";
+      }
+      function selectedComponentSetVariantCount() {
+        return variantSelectionType() === "COMPONENT_SET" ? selection.roots[0].childCount : 0;
+      }
+      function variantStateLayersEligible() {
+        var type = variantSelectionType();
+        var parentType = variantSelectionParentType();
+        var independentComponent = type === "COMPONENT" && parentType !== "COMPONENT_SET";
+        var eligibleFrame = type === "FRAME" && parentType !== "COMPONENT" && parentType !== "COMPONENT_SET";
+        return activeVariantBaseMode !== "style-only" && (eligibleFrame || independentComponent);
+      }
       function updateVariantComboUi() {
         document.querySelectorAll("[data-variant-base]").forEach(function(btn) { btn.classList.toggle("active", btn.dataset.variantBase === activeVariantBaseMode); });
         document.querySelectorAll("[data-variant-style]").forEach(function(btn) { btn.classList.toggle("active", btn.dataset.variantStyle === activeVariantStyleMode); });
-        var baseCount = variantBaseCount(activeVariantBaseMode);
+        var existingVariantCount = selectedComponentSetVariantCount();
+        var baseCount = existingVariantCount || variantBaseCount(activeVariantBaseMode);
         var styleCount = variantStyleCount(activeVariantStyleMode);
         var count = baseCount * styleCount;
-        var baseLabel = activeVariantBaseMode === "style-only" ? "仅 Style" : "基础 " + baseCount;
+        var baseLabel = existingVariantCount
+          ? "现有 " + baseCount
+          : activeVariantBaseMode === "style-only" ? "仅 Style" : "基础 " + baseCount;
         var summary = activeVariantStyleMode === "none"
           ? "将生成 " + count + " 个变体：" + baseLabel
           : "将生成 " + count + " 个变体：" + baseLabel + " × " + variantStyleLabel(activeVariantStyleMode);
+        var option = document.getElementById("variantStateLayerVisibilityEnabled");
+        var optionWrap = document.getElementById("variantStateLayerOption");
+        var optionHint = document.getElementById("variantStateLayerHint");
+        var eligible = variantStateLayersEligible();
+        option.checked = !!(config && config.variantStateLayerVisibilityEnabled);
+        option.disabled = !eligible;
+        optionWrap.classList.toggle("is-disabled", !eligible);
+        if (activeVariantBaseMode === "style-only") {
+          optionHint.textContent = "仅 Style 模式没有 State，不执行状态层切换。";
+        } else if (variantSelectionType() === "COMPONENT_SET") {
+          optionHint.textContent = "已有 Component Set 追加 Style 时不改动原组件状态层。";
+        } else if (!eligible) {
+          optionHint.textContent = "请只选中一个 Frame 或独立 Component 后使用。";
+        } else {
+          optionHint.textContent = "递归精确匹配 Hover、Pressed、Disabled；Pressed 会同时打开 Hover。";
+        }
+        if (eligible && option.checked) summary += "，并按节点名切换状态层";
         document.getElementById("createVariantComboBtn").textContent = "生成 " + count + " 个变体";
         document.getElementById("variantComboSummary").textContent = summary;
       }
@@ -1096,9 +1156,15 @@
           status("仅 Style 模式需要选择“常态和完成”或“排名”");
           return;
         }
-        var count = variantBaseCount(activeVariantBaseMode) * variantStyleCount(activeVariantStyleMode);
+        var baseCount = selectedComponentSetVariantCount() || variantBaseCount(activeVariantBaseMode);
+        var count = baseCount * variantStyleCount(activeVariantStyleMode);
         status("正在制作 " + count + " 个变体...");
-        post({ type: "CREATE_VARIANTS", baseMode: activeVariantBaseMode, styleMode: activeVariantStyleMode });
+        post({
+          type: "CREATE_VARIANTS",
+          baseMode: activeVariantBaseMode,
+          styleMode: activeVariantStyleMode,
+          applyStateLayerVisibility: variantStateLayersEligible() && !!config.variantStateLayerVisibilityEnabled
+        });
       }
       function insertTemplate(templateId) {
         var template = config.templates.find(function(entry) { return entry.id === templateId; });
@@ -1253,7 +1319,7 @@
         link.click();
         setTimeout(function() { URL.revokeObjectURL(link.href); }, 1000);
       }
-      function renderAll() { renderSelection(); renderTerms(); renderTermEditor(); renderTemplates(); renderSettings(); }
+      function renderAll() { renderSelection(); renderTerms(); renderTermEditor(); renderTemplates(); renderSettings(); updateVariantComboUi(); }
       function esc(text) { return String(text).replace(/[&<>"']/g, function(ch) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[ch]; }); }
 
       document.querySelectorAll(".tab").forEach(function(btn) { btn.onclick = function() { activateTab(btn.dataset.tab); }; });
@@ -1268,6 +1334,12 @@
       document.querySelectorAll("[data-variant-base]").forEach(function(btn) { btn.onclick = function() { activeVariantBaseMode = btn.dataset.variantBase; updateVariantComboUi(); }; });
       document.querySelectorAll("[data-variant-style]").forEach(function(btn) { btn.onclick = function() { activeVariantStyleMode = btn.dataset.variantStyle; updateVariantComboUi(); }; });
       document.getElementById("createVariantComboBtn").onclick = createVariants;
+      document.getElementById("variantStateLayerVisibilityEnabled").onchange = function() {
+        config.variantStateLayerVisibilityEnabled = checked("variantStateLayerVisibilityEnabled");
+        save();
+        updateVariantComboUi();
+        status("状态层切换设置已保存");
+      };
       updateVariantComboUi();
       document.getElementById("variantHelpBtn").onclick = function() { showVariantHelp(true); };
       document.getElementById("closeVariantHelpBtn").onclick = function() { showVariantHelp(false); };
@@ -1337,7 +1409,7 @@
         var message = event.data.pluginMessage;
         if (!message) return;
         if (message.type === "READY") { config = message.config || defaultConfig(); normalizeConfig(); selection = message.selection; renderAll(); }
-        if (message.type === "SELECTION") { selection = message.selection; renderSelection(); renderTerms(); renderTermEditor(); }
+        if (message.type === "SELECTION") { selection = message.selection; renderSelection(); renderTerms(); renderTermEditor(); updateVariantComboUi(); }
         if (message.type === "APPLY_RESULT" || message.type === "PROJECT_CONFIG_WRITTEN") status(message.message);
         if (message.type === "CONFIG_EXPORTED") { setValue("ioBox", message.json); status("配置已导出到文本框"); }
         if (message.type === "ERROR") status("错误：" + message.message);

@@ -271,7 +271,8 @@
       removeMaskNodes: true,
       addTextControlProperties: false,
       addImageControlProperties: false
-    }
+    },
+    variantStateLayerVisibilityEnabled: false
   };
   var localTestConfig = {};
   if (localTestConfig.aiSettings) Object.assign(defaultConfig.aiSettings, localTestConfig.aiSettings);
@@ -294,7 +295,7 @@
     }
   });
   figma.ui.onmessage = async (message) => {
-    var _a, _b, _c;
+    var _a, _b, _c, _d;
     try {
       if (message.type === "SCAN_SELECTION") {
         post({ type: "SELECTION", selection: await getSelectionSummary() });
@@ -383,9 +384,14 @@
         return;
       }
       if (message.type === "CREATE_VARIANTS") {
-        const result = await createVariants((_b = (_a = message.baseMode) != null ? _a : message.mode) != null ? _b : "three", (_c = message.styleMode) != null ? _c : "none");
+        const result = await createVariants(
+          (_b = (_a = message.baseMode) != null ? _a : message.mode) != null ? _b : "three",
+          (_c = message.styleMode) != null ? _c : "none",
+          (_d = message.applyStateLayerVisibility) != null ? _d : false
+        );
         const prefix = result.appendedStyle ? "\u5DF2\u8FFD\u52A0 Style\uFF0C\u5E76" : result.convertedFrame ? "\u5DF2\u5C06 Frame \u8F6C\u4E3A Component\uFF0C\u5E76" : "";
-        post({ type: "APPLY_RESULT", message: `${prefix}\u5236\u4F5C ${result.count} \u4E2A\u53D8\u4F53\uFF1A${result.name}` });
+        const layerSuffix = result.stateLayerApplied ? `\uFF1B\u72B6\u6001\u5C42\u5339\u914D ${result.stateLayerMatches} \u4E2A\uFF0C\u5207\u6362 ${result.stateLayerChanges} \u6B21` : "";
+        post({ type: "APPLY_RESULT", message: `${prefix}\u5236\u4F5C ${result.count} \u4E2A\u53D8\u4F53\uFF1A${result.name}${layerSuffix}` });
         figma.notify(`${prefix}\u5236\u4F5C ${result.count} \u4E2A\u53D8\u4F53`);
         return;
       }
@@ -414,7 +420,7 @@
     await figma.clientStorage.setAsync(CONFIG_KEY, normalizeConfig(config));
   }
   function normalizeConfig(input) {
-    var _a, _b, _c, _d, _e;
+    var _a, _b, _c, _d, _e, _f;
     if (!input || typeof input !== "object") return defaultConfig;
     const partial = input;
     const aiSettings = (_a = partial.aiSettings) != null ? _a : {};
@@ -447,7 +453,8 @@
       templates: normalizeTemplates(partial.templates),
       aiSettings: normalizedAiSettings,
       translateSettings: normalizedTranslateSettings,
-      autoNameFrameSettings: normalizedAutoNameFrameSettings
+      autoNameFrameSettings: normalizedAutoNameFrameSettings,
+      variantStateLayerVisibilityEnabled: (_f = partial.variantStateLayerVisibilityEnabled) != null ? _f : false
     };
   }
   function normalizeTemplates(input) {
@@ -509,14 +516,18 @@
   }
   async function getSelectionSummary() {
     await ensureCurrentPageLoaded();
-    const roots = figma.currentPage.selection.map((node) => ({
-      id: node.id,
-      name: node.name,
-      type: node.type,
-      kind: getNodeKind(node),
-      childCount: "children" in node ? node.children.length : 0,
-      sourceText: getSelectionSourceText(node)
-    }));
+    const roots = figma.currentPage.selection.map((node) => {
+      var _a, _b;
+      return {
+        id: node.id,
+        name: node.name,
+        type: node.type,
+        parentType: (_b = (_a = node.parent) == null ? void 0 : _a.type) != null ? _b : "",
+        kind: getNodeKind(node),
+        childCount: "children" in node ? node.children.length : 0,
+        sourceText: getSelectionSourceText(node)
+      };
+    });
     return { count: roots.length, roots };
   }
   function getSelectionSourceText(node) {
@@ -646,7 +657,7 @@
     }
     return { renamed, name: baseName };
   }
-  async function createVariants(baseMode, styleMode) {
+  async function createVariants(baseMode, styleMode, applyStateLayerVisibility = false) {
     var _a;
     await ensureCurrentPageLoaded();
     const selection = Array.from(figma.currentPage.selection);
@@ -658,7 +669,15 @@
       const result = appendStyleVariants(selected, styleMode);
       figma.currentPage.selection = [selected];
       figma.viewport.scrollAndZoomIntoView([selected]);
-      return { count: result.count, name: selected.name, convertedFrame: false, appendedStyle: true };
+      return {
+        count: result.count,
+        name: selected.name,
+        convertedFrame: false,
+        appendedStyle: true,
+        stateLayerApplied: false,
+        stateLayerMatches: 0,
+        stateLayerChanges: 0
+      };
     }
     const convertedFrame = selected.type === "FRAME";
     const source = selected.type === "FRAME" ? figma.createComponentFromNode(selected) : selected;
@@ -674,6 +693,10 @@
     const definitions = variantDefinitions(baseMode, styleMode);
     const components = [];
     const clones = [];
+    const shouldApplyStateLayers = applyStateLayerVisibility && baseMode !== "style-only";
+    const sourceStateLayerSnapshot = shouldApplyStateLayers ? snapshotStateLayerVisibility(source) : [];
+    let stateLayerMatches = 0;
+    let stateLayerChanges = 0;
     try {
       for (let index = 0; index < definitions.length; index += 1) {
         const component = index === 0 ? source : source.clone();
@@ -682,6 +705,11 @@
           clones.push(component);
         }
         component.name = variantComponentName(definitions[index]);
+        if (shouldApplyStateLayers) {
+          const layerResult = applyStateLayerVisibilityForDefinition(component, definitions[index]);
+          stateLayerMatches += layerResult.matches;
+          stateLayerChanges += layerResult.changes;
+        }
         positionVariant(component, index, definitions, originalX, originalY, source.width, source.height);
         components.push(component);
       }
@@ -690,14 +718,56 @@
       arrangeVariantSet(componentSet);
       figma.currentPage.selection = [componentSet];
       figma.viewport.scrollAndZoomIntoView([componentSet]);
-      return { count: definitions.length, name: componentSet.name, convertedFrame, appendedStyle: false };
+      return {
+        count: definitions.length,
+        name: componentSet.name,
+        convertedFrame,
+        appendedStyle: false,
+        stateLayerApplied: shouldApplyStateLayers,
+        stateLayerMatches,
+        stateLayerChanges
+      };
     } catch (error) {
       source.name = originalName;
+      restoreStateLayerVisibility(sourceStateLayerSnapshot);
       for (const clone of clones) {
         if (!clone.removed) clone.remove();
       }
       throw new Error(`\u5236\u4F5C\u53D8\u4F53\u5931\u8D25\uFF1A${errorMessage(error)}`);
     }
+  }
+  function stateLayerName(name) {
+    const normalized = name.trim().toLowerCase();
+    if (normalized === "hover" || normalized === "pressed" || normalized === "disabled") return normalized;
+    return null;
+  }
+  function stateLayerNodes(component) {
+    return component.findAll((node) => stateLayerName(node.name) !== null).map((node) => ({
+      node,
+      name: stateLayerName(node.name)
+    }));
+  }
+  function snapshotStateLayerVisibility(component) {
+    return stateLayerNodes(component).map(({ node }) => ({ node, visible: node.visible }));
+  }
+  function restoreStateLayerVisibility(snapshot) {
+    for (const entry of snapshot) {
+      if (!entry.node.removed) entry.node.visible = entry.visible;
+    }
+  }
+  function applyStateLayerVisibilityForDefinition(component, definition) {
+    var _a;
+    const state = ((_a = definition.State) != null ? _a : "").trim().toLowerCase();
+    const layers = stateLayerNodes(component);
+    let changes = 0;
+    for (const layer of layers) {
+      const nextVisible = layer.name === "hover" && (state === "hover" || state === "pressed") || layer.name === "pressed" && state === "pressed" || layer.name === "disabled" && state === "disabled";
+      if (layer.node.visible !== nextVisible) {
+        layer.node.visible = nextVisible;
+        changes += 1;
+      }
+    }
+    return { matches: layers.length, changes };
   }
   function appendStyleVariants(componentSet, styleMode) {
     const styleValues = variantStyleValues(styleMode);
@@ -708,18 +778,22 @@
       throw new Error("\u5F53\u524D\u53D8\u4F53\u96C6\u5DF2\u7ECF\u6709 Style \u5C5E\u6027\uFF0C\u8BF7\u5148\u9009\u62E9\u6CA1\u6709 Style \u7684\u53D8\u4F53\u96C6");
     }
     const originals = Array.from(componentSet.children).filter((child) => child.type === "COMPONENT");
+    const originalStates = originals.map((original) => ({
+      original,
+      name: original.name,
+      definition: variantDefinitionFromComponent(original)
+    }));
     const clones = [];
     try {
-      for (let baseIndex = 0; baseIndex < originals.length; baseIndex += 1) {
-        const original = originals[baseIndex];
-        const baseDefinition = variantDefinitionFromComponent(original);
+      for (let baseIndex = 0; baseIndex < originalStates.length; baseIndex += 1) {
+        const { original, definition } = originalStates[baseIndex];
         for (let styleIndex = 0; styleIndex < styleValues.length; styleIndex += 1) {
           const target = styleIndex === 0 ? original : original.clone();
           if (styleIndex > 0) {
             componentSet.appendChild(target);
             clones.push(target);
           }
-          target.name = variantComponentName(__spreadProps(__spreadValues({}, baseDefinition), { Style: styleValues[styleIndex] }));
+          target.name = variantComponentName(__spreadProps(__spreadValues({}, definition), { Style: styleValues[styleIndex] }));
         }
       }
       arrangeVariantSet(componentSet);
@@ -727,6 +801,9 @@
     } catch (error) {
       for (const clone of clones) {
         if (!clone.removed) clone.remove();
+      }
+      for (const state of originalStates) {
+        if (!state.original.removed) state.original.name = state.name;
       }
       throw new Error(`\u8FFD\u52A0 Style \u53D8\u4F53\u5931\u8D25\uFF1A${errorMessage(error)}`);
     }

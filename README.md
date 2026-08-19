@@ -229,6 +229,16 @@ Style 规则：
 - `排名`：`Style=1st / 2nd / 3rd`
 - `不添加 Style`：保持原来的 3 / 4 / 6 / 8 变体行为
 
+可选的“按节点名切换状态层”仅在选中 Frame 或独立 Component 新建变体时生效，并会记住上次选择。开启后会递归检查全部后代，忽略大小写和首尾空格，只精确匹配 `Hover`、`Pressed`、`Disabled`；同名节点全部处理，缺失节点直接跳过，`Icon_Hover` 等非精确名称不匹配。
+
+- `State=Normal`：关闭 Hover、Pressed、Disabled
+- `State=Hover`：只打开 Hover
+- `State=Pressed`：打开 Hover，同时打开 Pressed（如有）
+- `State=Disabled`：只打开 Disabled（如有）
+- 选择按钮的 Checked 与 Unchecked 使用同一套 State 规则
+
+仅 Style 模式和已有 Component Set 追加 Style 不使用该选项；关闭选项时保留原有可见性。
+
 组合示例：
 
 - `仅 Style + 常态和完成`：2 个变体

@@ -107,8 +107,8 @@ export default function Home() {
             <a className="secondaryAction" href="#capabilities">浏览核心能力</a>
           </div>
           <div className="releaseLine" aria-label="当前版本">
-            <span>V0.1.53</span>
-            <span>UPDATED 2026.08.03</span>
+            <span>V0.1.54</span>
+            <span>UPDATED 2026.08.19</span>
             <span>INTERNAL TOOL</span>
           </div>
         </div>
@@ -214,7 +214,7 @@ export default function Home() {
           <Image src="/brand-logo.png" alt="" width={32} height={32} />
           <span>NGR Figma UI 锻造台</span>
         </a>
-        <span>V0.1.53 · 2026.08.03</span>
+        <span>V0.1.54 · 2026.08.19</span>
       </footer>
     </main>
   );
