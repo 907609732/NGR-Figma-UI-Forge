@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 
 const capabilities = [
   {
@@ -38,10 +39,10 @@ const capabilities = [
   },
   {
     index: "06",
-    title: "模板与变体",
+    title: "模板、一键变体与状态层",
     tag: "COMPONENT",
-    body: "导入 Library 或内置画板模板，批量生成 State、Checked 和 Style 组合，并按固定规则排列。",
-    meta: "TEMPLATE / VARIANT SET",
+    body: "导入 Library 或内置画板模板，批量生成 State、Checked 和 Style 组合；还可按节点名自动切换 Hover、Pressed、Disabled 状态层。",
+    meta: "TEMPLATE / VARIANT SET / STATE LAYERS",
   },
 ];
 
@@ -50,6 +51,29 @@ const workflow = [
   { title: "匹配规范", body: "从团队词库、翻译结果和属性方案中选择。" },
   { title: "批量锻造", body: "完成命名、整理、挂属性、模板或变体生成。" },
   { title: "交付复用", body: "将配置、组件和元数据沉淀为下一个项目的起点。" },
+];
+
+const releaseFeatures = [
+  {
+    label: "NORMAL",
+    title: "关闭全部状态层",
+    body: "生成 Normal 变体时，关闭精确命名为 Hover、Pressed、Disabled 的节点。",
+  },
+  {
+    label: "HOVER",
+    title: "只打开 Hover",
+    body: "生成 Hover 变体时，仅打开 Hover；重复或嵌套的精确同名节点会一起处理。",
+  },
+  {
+    label: "PRESSED",
+    title: "同时打开 Hover 与 Pressed",
+    body: "Pressed 会保留悬停反馈，并在存在 Pressed 节点时同步打开按下层。",
+  },
+  {
+    label: "DISABLED",
+    title: "只打开 Disabled",
+    body: "生成 Disabled 变体时仅打开 Disabled；缺少对应节点会跳过，不中断生成。",
+  },
 ];
 
 const faqs = [
@@ -68,6 +92,10 @@ const faqs = [
   {
     q: "规范能否在不同项目复用？",
     a: "可以。词库、属性方案和插件配置支持导入导出，适合在项目、设备和团队成员之间复用。",
+  },
+  {
+    q: "一键变体会自动修改状态层吗？",
+    a: "这是默认关闭的可选功能，只用于 Frame 或独立 Component 新建变体。开启后会递归精确匹配 Hover、Pressed、Disabled；Pressed 会同时打开 Hover 和已有的 Pressed。",
   },
 ];
 
@@ -91,6 +119,7 @@ export default function Home() {
           <div className="navLinks">
             <a href="#capabilities">功能</a>
             <a href="#workflow">工作流</a>
+            <Link href="/tutorial">教程</Link>
             <a href="#install">安装</a>
             <a href="#faq">FAQ</a>
           </div>
@@ -103,8 +132,8 @@ export default function Home() {
             把节点命名、中文翻译、属性方案、画板整理、模板与变体，锻造成一条团队可复用的 UI 交付流程。
           </p>
           <div className="heroActions">
-            <a className="primaryAction" href="#install">查看安装方式</a>
-            <a className="secondaryAction" href="#capabilities">浏览核心能力</a>
+            <Link className="primaryAction" href="/tutorial">查看完整教程</Link>
+            <a className="secondaryAction" href="#capabilities">浏览产品功能</a>
           </div>
           <div className="releaseLine" aria-label="当前版本">
             <span>V0.1.54</span>
@@ -157,6 +186,31 @@ export default function Home() {
         </div>
       </section>
 
+      <section className="releaseFeature sectionBand" aria-labelledby="state-layer-title">
+        <div className="sectionIntro wide">
+          <p className="eyebrow">NEW IN V0.1.54 / VARIANT STATE LAYERS</p>
+          <h2 id="state-layer-title">生成变体时，状态层也能自动就位。</h2>
+          <p>
+            开启“按节点名切换状态层”后，插件会递归精确匹配 Hover、Pressed、Disabled。
+            Checked 与 Unchecked 使用同一套 State 规则，Style 组合也会保持一致。
+          </p>
+        </div>
+        <div className="releaseFeatureGrid">
+          {releaseFeatures.map((item) => (
+            <article key={item.label}>
+              <span>{item.label}</span>
+              <h3>{item.title}</h3>
+              <p>{item.body}</p>
+            </article>
+          ))}
+        </div>
+        <div className="releaseFeatureNote">
+          <strong>精确、安全、可选</strong>
+          <p>Icon_Hover 等非精确名称不会被修改；已有 Component Set 追加 Style 时该选项自动禁用。</p>
+          <Link href="/tutorial#variants">查看一键变体教程 →</Link>
+        </div>
+      </section>
+
       <section id="workflow" className="workflow sectionBand">
         <div className="workflowVisual" aria-label="插件命名界面预览">
           <Image src="/plugin-ui.png" alt="词库命名、中文翻译和属性方案界面" width={560} height={720} />
@@ -206,7 +260,7 @@ export default function Home() {
       <section className="closing sectionBand">
         <p className="eyebrow">NGR FIGMA UI FORGE</p>
         <h2>让设计经验不只留在个人操作里。</h2>
-        <a className="primaryAction darkAction" href="#install">开始安装</a>
+        <Link className="primaryAction darkAction" href="/tutorial">从教程开始</Link>
       </section>
 
       <footer>
@@ -214,7 +268,11 @@ export default function Home() {
           <Image src="/brand-logo.png" alt="" width={32} height={32} />
           <span>NGR Figma UI 锻造台</span>
         </a>
-        <span>V0.1.54 · 2026.08.19</span>
+        <div className="footerLinks">
+          <Link href="/tutorial">使用教程</Link>
+          <a href="https://github.com/907609732/FigamTool" target="_blank" rel="noreferrer">GitHub</a>
+          <span>V0.1.54 · 2026.08.19</span>
+        </div>
       </footer>
     </main>
   );
