@@ -1,6 +1,7 @@
 {
-  "name": "figma-ai-auto-namer",
+  "name": "ngr-figma-ui-forge",
   "version": "0.1.53",
+  "updatedAt": "2026-08-04",
   "private": true,
   "type": "module",
   "scripts": {
@@ -10,16 +11,10 @@
     "dev": "node scripts/build.mjs --watch"
   },
   "dependencies": {
-    "@vitejs/plugin-react": "^5.0.0",
-    "vite": "^7.0.0",
     "typescript": "^5.8.0",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0",
     "esbuild": "^0.25.0"
   },
   "devDependencies": {
-    "@figma/plugin-typings": "^1.110.0",
-    "@types/react": "^19.1.0",
-    "@types/react-dom": "^19.1.0"
+    "@figma/plugin-typings": "^1.110.0"
   }
 }

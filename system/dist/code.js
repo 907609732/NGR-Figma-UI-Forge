@@ -808,8 +808,10 @@
     });
   }
   function variantColumns(definitions) {
-    const stateCount = uniqueVariantValues(definitions, "State").length || 1;
-    return Math.max(1, Math.ceil(definitions.length / stateCount));
+    const stateCount = new Set(
+      definitions.map((definition) => definition.State).filter((value) => Boolean(value))
+    ).size;
+    return Math.max(1, stateCount);
   }
   function variantSortValue(definition) {
     const stateIndex = variantOrderIndex(["Normal", "Hover", "Pressed", "Disabled"], definition.State);
@@ -821,9 +823,6 @@
     if (!value) return 0;
     const index = order.indexOf(value);
     return index >= 0 ? index : order.length;
-  }
-  function uniqueVariantValues(definitions, key) {
-    return Array.from(new Set(definitions.map((definition) => definition[key]).filter((value) => Boolean(value))));
   }
   async function insertTemplate(templateId, config) {
     await ensureCurrentPageLoaded();

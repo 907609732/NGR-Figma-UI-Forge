@@ -32,9 +32,10 @@ async function buildUi() {
     readFile("src/ui.html", "utf8"),
     readFile("package.json", "utf8")
   ]);
-  const { version } = JSON.parse(packageJson);
+  const { version, updatedAt } = JSON.parse(packageJson);
   const output = html
     .replaceAll("__APP_VERSION__", version)
+    .replaceAll("__APP_UPDATED_AT__", updatedAt)
     .replaceAll("__LOCAL_TEST_CONFIG__", injectedTestConfig);
   await writeFile(`${outDir}/ui.html`, output, "utf8");
 }

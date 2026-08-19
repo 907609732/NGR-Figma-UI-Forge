@@ -1,6 +1,8 @@
 node_modules/
 system/node_modules/
 .DS_Store
+.plastic/
+.workbuddy/
 .figmatool-test-config.json
 system/.figmatool-test-config.json
 dist-local/
