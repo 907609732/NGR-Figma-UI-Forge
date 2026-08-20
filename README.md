@@ -6,9 +6,9 @@
   <p>
     <a href="https://github.com/907609732/NGR-Figma-UI-Forge/releases/tag/v0.1.54">下载正式版</a>
     ·
-    <a href="https://ai-auto-namer-figma.chenyuecai.chatgpt.site/">官方网站</a>
+    <a href="https://figma.lttlt.top/">官方网站</a>
     ·
-    <a href="https://ai-auto-namer-figma.chenyuecai.chatgpt.site/tutorial">使用教程</a>
+    <a href="https://figma.lttlt.top/tutorial">使用教程</a>
     ·
     <a href="./docs/软件交互文档.md">交互文档</a>
   </p>
@@ -70,7 +70,7 @@ NGR Figma UI Forge 用于减少游戏 UI 设计和交付中的重复操作。设
 ## 使用说明
 
 - 完整功能与页面规则：[软件交互文档](./docs/软件交互文档.md)
-- 在线教程：[使用教程](https://ai-auto-namer-figma.chenyuecai.chatgpt.site/tutorial)
+- 在线教程：[使用教程](https://figma.lttlt.top/tutorial)
 - 正式版本：[GitHub Releases](https://github.com/907609732/NGR-Figma-UI-Forge/releases)
 - 问题反馈：[GitHub Issues](https://github.com/907609732/NGR-Figma-UI-Forge/issues)
 

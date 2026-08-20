@@ -11,7 +11,7 @@
       "https://fanyi-api.baidu.com",
       "https://api.openai.com",
       "https://api.moonshot.cn",
-      "https://uiforge.lttlt.top"
+      "https://figma.lttlt.top"
     ],
     "reasoning": "Baidu translation naming and optional AI naming suggestions call these configured API endpoints; the settings panel also links to the product website."
   },

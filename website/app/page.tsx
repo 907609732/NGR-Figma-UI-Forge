@@ -270,7 +270,7 @@ export default function Home() {
         </a>
         <div className="footerLinks">
           <Link href="/tutorial">使用教程</Link>
-          <a href="https://github.com/907609732/FigamTool" target="_blank" rel="noreferrer">GitHub</a>
+          <a href="https://github.com/907609732/NGR-Figma-UI-Forge" target="_blank" rel="noreferrer">GitHub</a>
           <span>V0.1.54 · 2026.08.19</span>
         </div>
       </footer>

@@ -23,4 +23,4 @@
 
 - 百度翻译、OpenAI 和 Kimi 功能需要联网，并在插件设置中填写对应配置。
 - 正式版不包含任何 API 密钥、本机缓存或测试配置。
-- 官方网站：`https://uiforge.lttlt.top`。
+- 官方网站：`https://figma.lttlt.top`。
