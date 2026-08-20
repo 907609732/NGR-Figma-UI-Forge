@@ -195,6 +195,26 @@ h1, h2, h3 { margin: 0; letter-spacing: 0; }
 .workflowList p { margin-top: 5px; color: #aeb4be; }
 
 .install { background: var(--white); }
+.downloadPanel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 24px 40px;
+  align-items: center;
+  margin-top: 48px;
+  border: 1px solid var(--line);
+  border-left: 5px solid var(--orange);
+  border-radius: 8px;
+  padding: 28px 30px;
+  background: var(--paper);
+}
+.downloadMeta { display: flex; min-width: 0; align-items: center; gap: 18px; }
+.downloadMeta strong { font-size: 19px; }
+.downloadMeta p { margin-top: 5px; color: var(--muted); font-size: 12px; }
+.downloadBadge { border-radius: 4px; padding: 7px 9px; background: var(--green); color: var(--ink); font-size: 10px; font-weight: 900; }
+.downloadActions { display: flex; flex-wrap: wrap; gap: 10px; }
+.checksum { display: flex; min-width: 0; grid-column: 1 / -1; gap: 14px; margin: 0; padding-top: 20px; border-top: 1px solid var(--line); color: var(--muted); font-size: 10px; }
+.checksum span { flex: 0 0 auto; color: var(--ink); font-weight: 900; }
+.checksum code { min-width: 0; overflow-wrap: anywhere; }
 .installSteps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; margin: 54px 0 0; padding: 0; border-top: 1px solid var(--line); list-style: none; }
 .installSteps li { min-height: 220px; padding: 26px 28px 0 0; border-right: 1px solid var(--line); }
 .installSteps li + li { padding-left: 28px; }
@@ -216,6 +236,8 @@ h1, h2, h3 { margin: 0; letter-spacing: 0; }
 .closing .eyebrow { color: var(--ink); }
 .closing h2 { max-width: 870px; margin: 0 auto; }
 .darkAction { margin-top: 30px; }
+.closingActions { justify-content: center; }
+.closingActions .darkAction { margin-top: 0; }
 
 footer { display: flex; min-height: 86px; align-items: center; justify-content: space-between; gap: 20px; padding: 0 max(24px, calc((100vw - 1240px) / 2)); background: var(--dark); color: #fff; }
 footer > span { color: #9299a5; font-size: 11px; }
@@ -351,6 +373,9 @@ footer > span { color: #9299a5; font-size: 11px; }
   .workflowVisual { max-height: 500px; }
   .workflowVisual img { width: min(100%, 430px); }
   .installSteps { grid-template-columns: 1fr; }
+  .downloadPanel { grid-template-columns: 1fr; padding: 24px 20px; }
+  .downloadActions { display: grid; grid-template-columns: 1fr; }
+  .checksum { grid-column: 1; flex-direction: column; gap: 6px; }
   .installSteps li, .installSteps li + li { min-height: 0; padding: 24px 0; border-right: 0; border-bottom: 1px solid var(--line); }
   .installSteps h3 { margin-top: 18px; }
   .faq { gap: 38px; }

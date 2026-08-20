@@ -1,6 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
 
+const downloadUrl = "https://github.com/907609732/NGR-Figma-UI-Forge/releases/download/v0.1.55/NGR-Figma-UI-Forge-v0.1.55.zip";
+const releaseUrl = "https://github.com/907609732/NGR-Figma-UI-Forge/releases/tag/v0.1.55";
+
 const capabilities = [
   {
     index: "01",
@@ -120,7 +123,7 @@ export default function Home() {
             <a href="#capabilities">功能</a>
             <a href="#workflow">工作流</a>
             <Link href="/tutorial">教程</Link>
-            <a href="#install">安装</a>
+            <a href="#download">下载</a>
             <a href="#faq">FAQ</a>
           </div>
         </nav>
@@ -132,8 +135,8 @@ export default function Home() {
             把节点命名、中文翻译、属性方案、画板整理、模板与变体，锻造成一条团队可复用的 UI 交付流程。
           </p>
           <div className="heroActions">
-            <Link className="primaryAction" href="/tutorial">查看完整教程</Link>
-            <a className="secondaryAction" href="#capabilities">浏览产品功能</a>
+            <a className="primaryAction" href={downloadUrl}>下载 v0.1.55</a>
+            <Link className="secondaryAction" href="/tutorial">查看完整教程</Link>
           </div>
           <div className="releaseLine" aria-label="当前版本">
             <span>V0.1.55</span>
@@ -229,16 +232,27 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="install" className="install sectionBand">
+      <section id="download" className="install sectionBand">
         <div className="sectionIntro wide">
-          <p className="eyebrow">INTERNAL INSTALLATION</p>
-          <h2>三步载入开发版插件。</h2>
-          <p>当前版本面向 NGR 内部工作流，通过 Figma 开发插件方式安装。</p>
+          <p className="eyebrow">DOWNLOAD / V0.1.55</p>
+          <h2>下载正式版，解压后即可导入。</h2>
+          <p>正式包只包含插件运行所需的 4 个文件，不包含源码、依赖、API 密钥或本机配置。</p>
+        </div>
+        <div className="downloadPanel">
+          <div className="downloadMeta">
+            <span className="downloadBadge">LATEST</span>
+            <div><strong>NGR Figma UI Forge v0.1.55</strong><p>Windows / macOS · Figma Desktop · ZIP 44.4 KB</p></div>
+          </div>
+          <div className="downloadActions">
+            <a className="primaryAction" href={downloadUrl}>直接下载 ZIP</a>
+            <a className="secondaryAction" href={releaseUrl} target="_blank" rel="noreferrer">查看 Release</a>
+          </div>
+          <p className="checksum"><span>SHA-256</span><code>B07B6B978880E41EF1661612C1A75B0825D49BC5ED7EE2F27BFC3EFADA28F7C6</code></p>
         </div>
         <ol className="installSteps">
-          <li><span>01</span><h3>打开开发插件入口</h3><p>在 Figma 中进入 Plugins → Development。</p></li>
-          <li><span>02</span><h3>导入 Manifest</h3><p>选择 Import plugin from manifest，定位到项目根目录的 manifest.json。</p></li>
-          <li><span>03</span><h3>打开锻造台</h3><p>在开发插件列表选择 NGR Figma UI 锻造台。</p></li>
+          <li><span>01</span><h3>下载并完整解压</h3><p>不要直接在压缩包中运行；将 4 个文件解压到一个固定目录。</p></li>
+          <li><span>02</span><h3>导入 Manifest</h3><p>在 Figma Desktop 进入 Plugins → Development → Import plugin from manifest，选择 manifest.json。</p></li>
+          <li><span>03</span><h3>启动锻造台</h3><p>从 Development 插件列表打开 NGR Figma UI 锻造台，首次使用建议继续阅读完整教程。</p></li>
         </ol>
       </section>
 
@@ -260,7 +274,10 @@ export default function Home() {
       <section className="closing sectionBand">
         <p className="eyebrow">NGR FIGMA UI FORGE</p>
         <h2>让设计经验不只留在个人操作里。</h2>
-        <Link className="primaryAction darkAction" href="/tutorial">从教程开始</Link>
+        <div className="heroActions closingActions">
+          <a className="primaryAction darkAction" href={downloadUrl}>下载正式版</a>
+          <Link className="secondaryAction darkAction" href="/tutorial">从教程开始</Link>
+        </div>
       </section>
 
       <footer>
@@ -270,6 +287,7 @@ export default function Home() {
         </a>
         <div className="footerLinks">
           <Link href="/tutorial">使用教程</Link>
+          <a href={downloadUrl}>下载 v0.1.55</a>
           <a href="https://github.com/907609732/NGR-Figma-UI-Forge" target="_blank" rel="noreferrer">GitHub</a>
           <span>V0.1.55 · 2026.08.20</span>
         </div>
