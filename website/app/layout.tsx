@@ -11,7 +11,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const host = requestHeaders.get("host") ?? "localhost:3001";
   const protocol = host.startsWith("localhost") ? "http" : "https";
   const metadataBase = new URL(`${protocol}://${host}`);
-  const socialImage = new URL("/og-v0.1.54.png", metadataBase).toString();
+  const socialImage = new URL("/og-v0.1.55.png", metadataBase).toString();
 
   return {
     metadataBase,

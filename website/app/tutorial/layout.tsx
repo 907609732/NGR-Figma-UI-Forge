@@ -7,13 +7,13 @@ export const metadata: Metadata = {
   openGraph: {
     title: "NGR Figma UI 锻造台使用教程",
     description: "从安装到一键变体，按真实 Figma UI 交付流程逐步上手。",
-    images: ["/og-v0.1.54.png"],
+    images: ["/og-v0.1.55.png"],
   },
   twitter: {
     card: "summary_large_image",
     title: "NGR Figma UI 锻造台使用教程",
     description: "从安装到一键变体，按真实 Figma UI 交付流程逐步上手。",
-    images: ["/og-v0.1.54.png"],
+    images: ["/og-v0.1.55.png"],
   },
 };
 

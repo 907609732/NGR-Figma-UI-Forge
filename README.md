@@ -4,7 +4,7 @@
   <p><strong>NGR Figma UI 锻造台</strong> — 面向游戏 UI 生产流程的 Figma 效率插件。</p>
   <p>把节点命名、翻译、共享属性、画板整理、程序控制属性、组件变体和模板插入集中到一个工作台。</p>
   <p>
-    <a href="https://github.com/907609732/NGR-Figma-UI-Forge/releases/tag/v0.1.54">下载正式版</a>
+    <a href="https://github.com/907609732/NGR-Figma-UI-Forge/releases/tag/v0.1.55">下载正式版</a>
     ·
     <a href="https://figma.lttlt.top/">官方网站</a>
     ·
@@ -20,7 +20,7 @@
 
 NGR Figma UI Forge 用于减少游戏 UI 设计和交付中的重复操作。设计师可以在 Figma 内完成规范命名、属性复用、画板整理和组件状态制作，并把结果交给程序或其他测试电脑继续验证。
 
-当前正式版本为 **v0.1.54**，支持 Figma Desktop 导入测试。
+当前正式版本为 **v0.1.55**，支持 Figma Desktop 导入测试。
 
 ## 核心能力
 
@@ -33,7 +33,13 @@ NGR Figma UI Forge 用于减少游戏 UI 设计和交付中的重复操作。设
 - **模板插入**：支持 Figma Library Component Key 和内置 PC、IOS 画板模板。
 - **配置持久化**：词库、属性方案、API 配置和功能开关保存在当前设备。
 
-## v0.1.54 更新重点
+## v0.1.55 更新重点
+
+- 官方网站迁移到 [`figma.lttlt.top`](https://figma.lttlt.top/)，教程地址同步更新。
+- 插件设置、正式版网络白名单、README 和官网统一使用新域名。
+- 删除旧的 `uiforge.lttlt.top` 域名入口，保留 v0.1.54 的一键变体状态层能力。
+
+## v0.1.54 功能重点
 
 一键变体新增可选的“按节点名切换状态层”功能。开启后会递归检查组件后代，忽略大小写和首尾空格，只精确匹配 `Hover`、`Pressed`、`Disabled`。
 
@@ -54,7 +60,7 @@ NGR Figma UI Forge 用于减少游戏 UI 设计和交付中的重复操作。设
 
 ### 推荐：GitHub Release
 
-1. 下载 [NGR Figma UI Forge v0.1.54 正式版 ZIP](https://github.com/907609732/NGR-Figma-UI-Forge/releases/download/v0.1.54/NGR-Figma-UI-Forge-v0.1.54-5c602e4.zip)。
+1. 下载 [NGR Figma UI Forge v0.1.55 正式版 ZIP](https://github.com/907609732/NGR-Figma-UI-Forge/releases/download/v0.1.55/NGR-Figma-UI-Forge-v0.1.55.zip)。
 2. 将 ZIP 解压到任意固定目录。
 3. 打开 Figma Desktop。
 4. 进入“插件 → 开发 → 从 manifest 导入插件”。
@@ -65,7 +71,7 @@ NGR Figma UI Forge 用于减少游戏 UI 设计和交付中的重复操作。设
 
 ### 本地便携包
 
-仓库中的 [`正式版软件/NGR-Figma-UI-Forge-v0.1.54`](./正式版软件/NGR-Figma-UI-Forge-v0.1.54) 与 Release 对应，可直接复制或压缩到其他电脑。
+仓库中的 [`正式版软件/NGR-Figma-UI-Forge-v0.1.55`](./正式版软件/NGR-Figma-UI-Forge-v0.1.55) 与 Release 对应，可直接复制或压缩到其他电脑。
 
 ## 使用说明
 
@@ -125,7 +131,7 @@ npm.cmd test
 
 ## 版本信息
 
-- 当前版本：`v0.1.54`
-- 更新日期：`2026-08-19`
+- 当前版本：`v0.1.55`
+- 更新日期：`2026-08-20`
 - 仓库：[`907609732/NGR-Figma-UI-Forge`](https://github.com/907609732/NGR-Figma-UI-Forge)
-- Release ZIP SHA-256：`8CD800506FB1EDFDB02D4B4CBF09FC17A5697BD29D8F7B769AFE77BE135F3E2F`
+- Release ZIP SHA-256：`B07B6B978880E41EF1661612C1A75B0825D49BC5ED7EE2F27BFC3EFADA28F7C6`

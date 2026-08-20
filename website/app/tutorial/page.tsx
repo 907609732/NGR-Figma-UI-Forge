@@ -50,7 +50,7 @@ export default function TutorialPage() {
 
       <section className="tutorialHero">
         <div>
-          <p className="eyebrow">PRODUCT DOCUMENTATION / V0.1.54</p>
+          <p className="eyebrow">PRODUCT DOCUMENTATION / V0.1.55</p>
           <h1>把重复操作，整理成一条稳定工作流。</h1>
           <p>
             这份教程从安装开始，依次介绍词库命名、中文翻译、属性方案、画板整理、模板和一键变体。
@@ -204,7 +204,7 @@ export default function TutorialPage() {
               <details><summary>为什么状态层没有切换？<span>+</span></summary><p>先确认开关已开启、当前是在 Frame/独立 Component 新建变体，并检查节点名是否精确为 Hover、Pressed 或 Disabled。</p></details>
               <details><summary>为什么选项是灰色？<span>+</span></summary><p>仅 Style 模式、选中 Component Set，或选择位于 Component Set 内的组件时不适用。</p></details>
               <details><summary>翻译失败会不会破坏画板？<span>+</span></summary><p>画板整理会尽量使用原名称继续；请到设置页检查百度翻译配置和网络权限。</p></details>
-              <details><summary>如何确认自己使用的是新版本？<span>+</span></summary><p>打开插件设置页的软件信息，版本应显示 0.1.54，发布日期为 2026-08-19。</p></details>
+              <details><summary>如何确认自己使用的是新版本？<span>+</span></summary><p>打开插件设置页的软件信息，版本应显示 0.1.55，发布日期为 2026-08-20。</p></details>
             </div>
           </section>
 

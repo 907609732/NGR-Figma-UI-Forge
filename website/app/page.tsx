@@ -136,8 +136,8 @@ export default function Home() {
             <a className="secondaryAction" href="#capabilities">浏览产品功能</a>
           </div>
           <div className="releaseLine" aria-label="当前版本">
-            <span>V0.1.54</span>
-            <span>UPDATED 2026.08.19</span>
+            <span>V0.1.55</span>
+            <span>UPDATED 2026.08.20</span>
             <span>INTERNAL TOOL</span>
           </div>
         </div>
@@ -271,7 +271,7 @@ export default function Home() {
         <div className="footerLinks">
           <Link href="/tutorial">使用教程</Link>
           <a href="https://github.com/907609732/NGR-Figma-UI-Forge" target="_blank" rel="noreferrer">GitHub</a>
-          <span>V0.1.54 · 2026.08.19</span>
+          <span>V0.1.55 · 2026.08.20</span>
         </div>
       </footer>
     </main>
