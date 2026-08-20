@@ -2,8 +2,8 @@
   "name": "NGR Figma UI 锻造台",
   "id": "1264137593818559663",
   "api": "1.0.0",
-  "main": "system/dist/code.js",
-  "ui": "system/dist/ui.html",
+  "main": "code.js",
+  "ui": "ui.html",
   "editorType": ["figma"],
   "networkAccess": {
     "allowedDomains": [
@@ -13,7 +13,6 @@
       "https://api.moonshot.cn",
       "https://figma.lttlt.top"
     ],
-    "devAllowedDomains": ["*"],
     "reasoning": "Baidu translation naming and optional AI naming suggestions call these configured API endpoints; the settings panel also links to the product website."
   },
   "documentAccess": "dynamic-page"

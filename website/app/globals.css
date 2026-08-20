@@ -171,6 +171,19 @@ h1, h2, h3 { margin: 0; letter-spacing: 0; }
 .capabilityCard p { margin-top: 14px; }
 .capabilityCard small { margin-top: auto; padding-top: 24px; border-top: 1px solid var(--line); color: #7b818c; font-size: 9px; font-weight: 900; }
 
+.releaseFeature { background: #ffe3c2; }
+.releaseFeatureGrid { display: grid; grid-template-columns: repeat(4, 1fr); margin-top: 52px; border-top: 1px solid #d8b58d; border-bottom: 1px solid #d8b58d; }
+.releaseFeatureGrid article { min-height: 250px; padding: 28px 24px 28px 0; border-right: 1px solid #d8b58d; }
+.releaseFeatureGrid article + article { padding-left: 24px; }
+.releaseFeatureGrid article:last-child { border-right: 0; }
+.releaseFeatureGrid span { color: #a44f00; font-size: 11px; font-weight: 900; }
+.releaseFeatureGrid h3 { margin-top: 50px; font-size: 21px; }
+.releaseFeatureGrid p { margin-top: 12px; color: #62574c; }
+.releaseFeatureNote { display: grid; grid-template-columns: 180px minmax(0, 1fr) auto; gap: 24px; align-items: center; padding-top: 28px; }
+.releaseFeatureNote strong { font-size: 16px; }
+.releaseFeatureNote a { font-size: 13px; font-weight: 900; }
+.releaseFeatureNote a:hover { color: #a44f00; }
+
 .workflow { display: grid; grid-template-columns: minmax(340px, .82fr) minmax(0, 1.18fr); gap: 90px; align-items: center; overflow: hidden; background: var(--dark); color: #fff; }
 .workflowVisual { display: flex; justify-content: center; align-self: stretch; }
 .workflowVisual img { width: min(100%, 520px); height: auto; align-self: flex-start; border: 1px solid #4a4f59; border-radius: 8px; box-shadow: 0 30px 80px rgba(0, 0, 0, .36); }
@@ -182,6 +195,26 @@ h1, h2, h3 { margin: 0; letter-spacing: 0; }
 .workflowList p { margin-top: 5px; color: #aeb4be; }
 
 .install { background: var(--white); }
+.downloadPanel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 24px 40px;
+  align-items: center;
+  margin-top: 48px;
+  border: 1px solid var(--line);
+  border-left: 5px solid var(--orange);
+  border-radius: 8px;
+  padding: 28px 30px;
+  background: var(--paper);
+}
+.downloadMeta { display: flex; min-width: 0; align-items: center; gap: 18px; }
+.downloadMeta strong { font-size: 19px; }
+.downloadMeta p { margin-top: 5px; color: var(--muted); font-size: 12px; }
+.downloadBadge { border-radius: 4px; padding: 7px 9px; background: var(--green); color: var(--ink); font-size: 10px; font-weight: 900; }
+.downloadActions { display: flex; flex-wrap: wrap; gap: 10px; }
+.checksum { display: flex; min-width: 0; grid-column: 1 / -1; gap: 14px; margin: 0; padding-top: 20px; border-top: 1px solid var(--line); color: var(--muted); font-size: 10px; }
+.checksum span { flex: 0 0 auto; color: var(--ink); font-weight: 900; }
+.checksum code { min-width: 0; overflow-wrap: anywhere; }
 .installSteps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; margin: 54px 0 0; padding: 0; border-top: 1px solid var(--line); list-style: none; }
 .installSteps li { min-height: 220px; padding: 26px 28px 0 0; border-right: 1px solid var(--line); }
 .installSteps li + li { padding-left: 28px; }
@@ -203,9 +236,100 @@ h1, h2, h3 { margin: 0; letter-spacing: 0; }
 .closing .eyebrow { color: var(--ink); }
 .closing h2 { max-width: 870px; margin: 0 auto; }
 .darkAction { margin-top: 30px; }
+.closingActions { justify-content: center; }
+.closingActions .darkAction { margin-top: 0; }
 
 footer { display: flex; min-height: 86px; align-items: center; justify-content: space-between; gap: 20px; padding: 0 max(24px, calc((100vw - 1240px) / 2)); background: var(--dark); color: #fff; }
 footer > span { color: #9299a5; font-size: 11px; }
+.footerLinks { display: flex; align-items: center; gap: 22px; color: #b8bec7; font-size: 11px; }
+.footerLinks a:hover { color: var(--orange); }
+
+.tutorialPage { min-height: 100vh; background: var(--paper); }
+.tutorialHeader {
+  position: sticky;
+  z-index: 20;
+  top: 0;
+  display: flex;
+  width: 100%;
+  min-height: 68px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 0 max(24px, calc((100vw - 1240px) / 2));
+  border-bottom: 1px solid var(--line);
+  background: rgba(255, 255, 255, .94);
+  backdrop-filter: blur(14px);
+}
+.tutorialHeader nav { display: flex; gap: 24px; color: #555c66; font-size: 12px; font-weight: 800; }
+.tutorialHeader nav a:hover { color: var(--orange); }
+.tutorialHero {
+  display: grid;
+  min-height: 620px;
+  grid-template-columns: minmax(0, 1.05fr) minmax(360px, .95fr);
+  gap: 80px;
+  align-items: center;
+  overflow: hidden;
+  padding: 78px max(24px, calc((100vw - 1240px) / 2));
+  border-bottom: 1px solid var(--line);
+  background: var(--dark);
+  color: #fff;
+}
+.tutorialHero h1 { max-width: 760px; font-size: 64px; line-height: 1.04; }
+.tutorialHero > div > p:not(.eyebrow) { max-width: 720px; margin-top: 24px; color: #b8bec7; font-size: 18px; }
+.tutorialHeroVisual { display: flex; max-height: 560px; justify-content: center; align-self: end; overflow: hidden; }
+.tutorialHeroVisual img { width: min(100%, 500px); height: auto; border: 1px solid #444a54; border-radius: 8px 8px 0 0; box-shadow: 0 30px 80px rgba(0, 0, 0, .45); }
+.tutorialShell { display: grid; width: min(1240px, calc(100% - 48px)); grid-template-columns: 230px minmax(0, 1fr); gap: 80px; margin: 0 auto; padding: 72px 0 120px; }
+.tutorialToc { position: sticky; top: 100px; height: fit-content; padding-right: 26px; border-right: 1px solid var(--line); }
+.tutorialToc > p { color: var(--ink); font-size: 11px; font-weight: 900; }
+.tutorialToc nav { display: grid; gap: 3px; margin-top: 18px; }
+.tutorialToc nav a { padding: 8px 10px; border-radius: 4px; color: #656b75; font-size: 12px; font-weight: 700; }
+.tutorialToc nav a:hover { background: #e6eaee; color: var(--ink); }
+.tocBack { display: inline-block; margin-top: 24px; color: #b45d05; font-size: 11px; font-weight: 900; }
+.tutorialDocument { min-width: 0; }
+.docSection { scroll-margin-top: 96px; padding: 72px 0; border-bottom: 1px solid var(--line); }
+.docSection:first-child { padding-top: 0; }
+.docKicker { margin-bottom: 14px; color: #c35e00; font-size: 10px; font-weight: 900; }
+.docSection h2, .tutorialClosing h2 { max-width: 780px; font-size: 43px; line-height: 1.12; }
+.docSection h3 { margin-top: 44px; font-size: 23px; }
+.docLead { max-width: 760px; margin-top: 18px; font-size: 17px; }
+.docSteps { display: grid; gap: 0; margin: 36px 0 0; padding: 0; border-top: 1px solid var(--line); list-style: none; }
+.docSteps li { display: grid; grid-template-columns: 54px 1fr; gap: 18px; padding: 22px 0; border-bottom: 1px solid var(--line); }
+.docSteps li > span { color: var(--orange); font-size: 12px; font-weight: 900; }
+.docSteps li p { color: #434953; }
+.docGrid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 34px; }
+.docGrid.three { grid-template-columns: repeat(3, 1fr); }
+.docGrid > div { min-height: 150px; padding: 24px; border: 1px solid var(--line); border-radius: 6px; background: var(--white); }
+.docGrid strong { font-size: 16px; }
+.docGrid p { margin-top: 12px; }
+.docCallout { display: grid; grid-template-columns: 180px 1fr; gap: 24px; margin-top: 30px; padding: 22px 24px; border-left: 4px solid var(--blue); background: #e6f4fc; }
+.docCallout.warning { border-color: var(--orange); background: #fff0dc; }
+.docCallout.strong { border-color: var(--orange); background: var(--white); }
+.docCallout p { color: #4d5661; }
+.docSectionAccent { margin-right: -32px; margin-left: -32px; padding-right: 32px; padding-left: 32px; background: #edf1f4; }
+.variantModeGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 36px; }
+.variantModeGrid > div { min-height: 180px; padding: 22px; border: 1px solid #cfd5dc; background: var(--white); }
+.variantModeGrid span { display: block; color: var(--orange); font-size: 36px; font-weight: 900; }
+.variantModeGrid strong { display: block; margin-top: 24px; }
+.variantModeGrid p { margin-top: 8px; font-size: 13px; }
+.tableWrap { margin-top: 28px; overflow-x: auto; border: 1px solid #cbd2da; background: var(--white); }
+.tableWrap table { width: 100%; min-width: 560px; border-collapse: collapse; text-align: left; }
+.tableWrap th, .tableWrap td { padding: 16px 18px; border-right: 1px solid #dce1e6; border-bottom: 1px solid #dce1e6; }
+.tableWrap thead th { background: var(--dark); color: #fff; font-size: 11px; }
+.tableWrap tbody th { font-size: 13px; }
+.tableWrap tbody td { color: #555d67; font-size: 13px; }
+.tableWrap tr:last-child th, .tableWrap tr:last-child td { border-bottom: 0; }
+.tableWrap th:last-child, .tableWrap td:last-child { border-right: 0; }
+.docBullets { display: grid; gap: 10px; margin: 28px 0 0; padding-left: 20px; color: #4f5660; line-height: 1.7; }
+.docFaq { margin-top: 32px; border-top: 1px solid var(--line); }
+.docFaq details { border-bottom: 1px solid var(--line); }
+.docFaq summary { display: flex; min-height: 68px; align-items: center; justify-content: space-between; gap: 16px; cursor: pointer; font-weight: 800; list-style: none; }
+.docFaq summary::-webkit-details-marker { display: none; }
+.docFaq summary span { color: var(--orange); font-size: 23px; font-weight: 400; }
+.docFaq details[open] summary span { transform: rotate(45deg); }
+.docFaq details p { padding: 0 44px 22px 0; }
+.tutorialClosing { padding: 76px 42px; background: var(--blue); text-align: center; }
+.tutorialClosing h2 { margin: 0 auto; }
+.tutorialClosing .primaryAction { margin-top: 28px; }
 
 @media (max-width: 1040px) {
   .hero h1 { max-width: 560px; font-size: 62px; }
@@ -214,6 +338,13 @@ footer > span { color: #9299a5; font-size: 11px; }
   .positioning, .workflow, .faq { grid-template-columns: 1fr; gap: 52px; }
   .workflowVisual { max-height: 620px; overflow: hidden; }
   .capabilityGrid { grid-template-columns: repeat(2, 1fr); }
+  .releaseFeatureGrid { grid-template-columns: repeat(2, 1fr); }
+  .releaseFeatureGrid article:nth-child(2) { border-right: 0; }
+  .releaseFeatureGrid article:nth-child(-n+2) { border-bottom: 1px solid #d8b58d; }
+  .tutorialHero { grid-template-columns: 1fr 360px; gap: 42px; }
+  .tutorialHero h1 { font-size: 52px; }
+  .tutorialShell { grid-template-columns: 200px minmax(0, 1fr); gap: 44px; }
+  .docGrid.three { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 720px) {
@@ -242,11 +373,36 @@ footer > span { color: #9299a5; font-size: 11px; }
   .workflowVisual { max-height: 500px; }
   .workflowVisual img { width: min(100%, 430px); }
   .installSteps { grid-template-columns: 1fr; }
+  .downloadPanel { grid-template-columns: 1fr; padding: 24px 20px; }
+  .downloadActions { display: grid; grid-template-columns: 1fr; }
+  .checksum { grid-column: 1; flex-direction: column; gap: 6px; }
   .installSteps li, .installSteps li + li { min-height: 0; padding: 24px 0; border-right: 0; border-bottom: 1px solid var(--line); }
   .installSteps h3 { margin-top: 18px; }
   .faq { gap: 38px; }
   .faqList { min-width: 0; }
   footer { min-height: 110px; align-items: flex-start; flex-direction: column; justify-content: center; }
+  .footerLinks { flex-wrap: wrap; gap: 14px 20px; }
+  .releaseFeatureGrid { grid-template-columns: 1fr; margin-top: 34px; }
+  .releaseFeatureGrid article, .releaseFeatureGrid article + article { min-height: 0; padding: 24px 0; border-right: 0; border-bottom: 1px solid #d8b58d; }
+  .releaseFeatureGrid article:last-child { border-bottom: 0; }
+  .releaseFeatureGrid h3 { margin-top: 24px; }
+  .releaseFeatureNote { grid-template-columns: 1fr; gap: 10px; }
+  .tutorialHeader { min-height: 62px; padding: 0 16px; }
+  .tutorialHeader nav a:not(:first-child) { display: none; }
+  .tutorialHero { min-height: 660px; grid-template-columns: 1fr; gap: 42px; padding: 64px 18px 0; }
+  .tutorialHero h1 { font-size: 42px; }
+  .tutorialHero > div > p:not(.eyebrow) { font-size: 16px; }
+  .tutorialHeroVisual { max-height: 280px; align-self: auto; }
+  .tutorialHeroVisual img { width: 360px; }
+  .tutorialShell { display: block; width: calc(100% - 36px); padding: 52px 0 80px; }
+  .tutorialToc { position: static; margin-bottom: 24px; padding: 0 0 28px; border-right: 0; border-bottom: 1px solid var(--line); }
+  .tutorialToc nav { grid-template-columns: repeat(2, 1fr); }
+  .docSection { padding: 56px 0; }
+  .docSection h2, .tutorialClosing h2 { font-size: 33px; }
+  .docGrid, .docGrid.three, .variantModeGrid { grid-template-columns: 1fr; }
+  .docCallout { grid-template-columns: 1fr; gap: 8px; }
+  .docSectionAccent { margin-right: -18px; margin-left: -18px; padding-right: 18px; padding-left: 18px; }
+  .tutorialClosing { margin: 0 -18px; padding: 60px 20px; }
 }
 
 @media (max-width: 420px) {

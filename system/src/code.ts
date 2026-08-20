@@ -138,9 +138,16 @@ figma.ui.onmessage = async (message: UiToPluginMessage) => {
     }
 
     if (message.type === "CREATE_VARIANTS") {
-      const result = await createVariants(message.baseMode ?? message.mode ?? "three", message.styleMode ?? "none");
+      const result = await createVariants(
+        message.baseMode ?? message.mode ?? "three",
+        message.styleMode ?? "none",
+        message.applyStateLayerVisibility ?? false
+      );
       const prefix = result.appendedStyle ? "已追加 Style，并" : result.convertedFrame ? "已将 Frame 转为 Component，并" : "";
-      post({ type: "APPLY_RESULT", message: `${prefix}制作 ${result.count} 个变体：${result.name}` });
+      const layerSuffix = result.stateLayerApplied
+        ? `；状态层匹配 ${result.stateLayerMatches} 个，切换 ${result.stateLayerChanges} 次`
+        : "";
+      post({ type: "APPLY_RESULT", message: `${prefix}制作 ${result.count} 个变体：${result.name}${layerSuffix}` });
       figma.notify(`${prefix}制作 ${result.count} 个变体`);
       return;
     }
@@ -210,7 +217,8 @@ function normalizeConfig(input: unknown): PluginConfig {
     templates: normalizeTemplates(partial.templates),
     aiSettings: normalizedAiSettings,
     translateSettings: normalizedTranslateSettings,
-    autoNameFrameSettings: normalizedAutoNameFrameSettings
+    autoNameFrameSettings: normalizedAutoNameFrameSettings,
+    variantStateLayerVisibilityEnabled: partial.variantStateLayerVisibilityEnabled ?? false
   };
 }
 
@@ -282,6 +290,7 @@ async function getSelectionSummary(): Promise<SelectionSummary> {
     id: node.id,
     name: node.name,
     type: node.type,
+    parentType: node.parent?.type ?? "",
     kind: getNodeKind(node),
     childCount: "children" in node ? node.children.length : 0,
     sourceText: getSelectionSourceText(node)
@@ -439,10 +448,27 @@ async function translateAndRename(
 
 type VariantDefinition = Partial<Record<"State" | "Checked" | "Style", string>>;
 
+type StateLayerName = "hover" | "pressed" | "disabled";
+type StateLayerSnapshot = Array<{ node: SceneNode; visible: boolean }>;
+
+interface StateLayerVisibilityResult {
+  matches: number;
+  changes: number;
+}
+
 async function createVariants(
   baseMode: VariantBaseMode,
-  styleMode: VariantStyleMode
-): Promise<{ count: number; name: string; convertedFrame: boolean; appendedStyle: boolean }> {
+  styleMode: VariantStyleMode,
+  applyStateLayerVisibility = false
+): Promise<{
+  count: number;
+  name: string;
+  convertedFrame: boolean;
+  appendedStyle: boolean;
+  stateLayerApplied: boolean;
+  stateLayerMatches: number;
+  stateLayerChanges: number;
+}> {
   await ensureCurrentPageLoaded();
   const selection = Array.from(figma.currentPage.selection);
   if (selection.length !== 1 || (selection[0].type !== "COMPONENT" && selection[0].type !== "FRAME" && selection[0].type !== "COMPONENT_SET")) {
@@ -454,7 +480,15 @@ async function createVariants(
     const result = appendStyleVariants(selected, styleMode);
     figma.currentPage.selection = [selected];
     figma.viewport.scrollAndZoomIntoView([selected]);
-    return { count: result.count, name: selected.name, convertedFrame: false, appendedStyle: true };
+    return {
+      count: result.count,
+      name: selected.name,
+      convertedFrame: false,
+      appendedStyle: true,
+      stateLayerApplied: false,
+      stateLayerMatches: 0,
+      stateLayerChanges: 0
+    };
   }
 
   const convertedFrame = selected.type === "FRAME";
@@ -472,6 +506,10 @@ async function createVariants(
   const definitions = variantDefinitions(baseMode, styleMode);
   const components: ComponentNode[] = [];
   const clones: ComponentNode[] = [];
+  const shouldApplyStateLayers = applyStateLayerVisibility && baseMode !== "style-only";
+  const sourceStateLayerSnapshot = shouldApplyStateLayers ? snapshotStateLayerVisibility(source) : [];
+  let stateLayerMatches = 0;
+  let stateLayerChanges = 0;
 
   try {
     for (let index = 0; index < definitions.length; index += 1) {
@@ -481,6 +519,11 @@ async function createVariants(
         clones.push(component);
       }
       component.name = variantComponentName(definitions[index]);
+      if (shouldApplyStateLayers) {
+        const layerResult = applyStateLayerVisibilityForDefinition(component, definitions[index]);
+        stateLayerMatches += layerResult.matches;
+        stateLayerChanges += layerResult.changes;
+      }
       positionVariant(component, index, definitions, originalX, originalY, source.width, source.height);
       components.push(component);
     }
@@ -490,14 +533,68 @@ async function createVariants(
     arrangeVariantSet(componentSet);
     figma.currentPage.selection = [componentSet];
     figma.viewport.scrollAndZoomIntoView([componentSet]);
-    return { count: definitions.length, name: componentSet.name, convertedFrame, appendedStyle: false };
+    return {
+      count: definitions.length,
+      name: componentSet.name,
+      convertedFrame,
+      appendedStyle: false,
+      stateLayerApplied: shouldApplyStateLayers,
+      stateLayerMatches,
+      stateLayerChanges
+    };
   } catch (error) {
     source.name = originalName;
+    restoreStateLayerVisibility(sourceStateLayerSnapshot);
     for (const clone of clones) {
       if (!clone.removed) clone.remove();
     }
     throw new Error(`制作变体失败：${errorMessage(error)}`);
   }
+}
+
+function stateLayerName(name: string): StateLayerName | null {
+  const normalized = name.trim().toLowerCase();
+  if (normalized === "hover" || normalized === "pressed" || normalized === "disabled") return normalized;
+  return null;
+}
+
+function stateLayerNodes(component: ComponentNode): Array<{ node: SceneNode; name: StateLayerName }> {
+  return component.findAll((node) => stateLayerName(node.name) !== null).map((node) => ({
+    node,
+    name: stateLayerName(node.name)!
+  }));
+}
+
+function snapshotStateLayerVisibility(component: ComponentNode): StateLayerSnapshot {
+  return stateLayerNodes(component).map(({ node }) => ({ node, visible: node.visible }));
+}
+
+function restoreStateLayerVisibility(snapshot: StateLayerSnapshot) {
+  for (const entry of snapshot) {
+    if (!entry.node.removed) entry.node.visible = entry.visible;
+  }
+}
+
+function applyStateLayerVisibilityForDefinition(
+  component: ComponentNode,
+  definition: VariantDefinition
+): StateLayerVisibilityResult {
+  const state = (definition.State ?? "").trim().toLowerCase();
+  const layers = stateLayerNodes(component);
+  let changes = 0;
+
+  for (const layer of layers) {
+    const nextVisible =
+      (layer.name === "hover" && (state === "hover" || state === "pressed")) ||
+      (layer.name === "pressed" && state === "pressed") ||
+      (layer.name === "disabled" && state === "disabled");
+    if (layer.node.visible !== nextVisible) {
+      layer.node.visible = nextVisible;
+      changes += 1;
+    }
+  }
+
+  return { matches: layers.length, changes };
 }
 
 function appendStyleVariants(componentSet: ComponentSetNode, styleMode: VariantStyleMode): { count: number } {
@@ -510,18 +607,22 @@ function appendStyleVariants(componentSet: ComponentSetNode, styleMode: VariantS
   }
 
   const originals = Array.from(componentSet.children).filter((child): child is ComponentNode => child.type === "COMPONENT");
+  const originalStates = originals.map((original) => ({
+    original,
+    name: original.name,
+    definition: variantDefinitionFromComponent(original)
+  }));
   const clones: ComponentNode[] = [];
   try {
-    for (let baseIndex = 0; baseIndex < originals.length; baseIndex += 1) {
-      const original = originals[baseIndex];
-      const baseDefinition = variantDefinitionFromComponent(original);
+    for (let baseIndex = 0; baseIndex < originalStates.length; baseIndex += 1) {
+      const { original, definition } = originalStates[baseIndex];
       for (let styleIndex = 0; styleIndex < styleValues.length; styleIndex += 1) {
         const target = styleIndex === 0 ? original : original.clone();
         if (styleIndex > 0) {
           componentSet.appendChild(target);
           clones.push(target);
         }
-        target.name = variantComponentName({ ...baseDefinition, Style: styleValues[styleIndex] });
+        target.name = variantComponentName({ ...definition, Style: styleValues[styleIndex] });
       }
     }
     arrangeVariantSet(componentSet);
@@ -529,6 +630,9 @@ function appendStyleVariants(componentSet: ComponentSetNode, styleMode: VariantS
   } catch (error) {
     for (const clone of clones) {
       if (!clone.removed) clone.remove();
+    }
+    for (const state of originalStates) {
+      if (!state.original.removed) state.original.name = state.name;
     }
     throw new Error(`追加 Style 变体失败：${errorMessage(error)}`);
   }

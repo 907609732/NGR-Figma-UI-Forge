@@ -127,13 +127,14 @@ export interface PluginConfig {
   aiSettings: AiSettings;
   translateSettings: TranslateSettings;
   autoNameFrameSettings: AutoNameFrameSettings;
+  variantStateLayerVisibilityEnabled: boolean;
 }
 
 declare const __LOCAL_TEST_CONFIG__: Partial<PluginConfig> | null;
 
 export interface SelectionSummary {
   count: number;
-  roots: Array<{ id: string; name: string; type: string; kind: NodeKind; childCount: number; sourceText: string }>;
+  roots: Array<{ id: string; name: string; type: string; parentType: string; kind: NodeKind; childCount: number; sourceText: string }>;
 }
 
 export type PluginToUiMessage =
@@ -159,7 +160,7 @@ export type UiToPluginMessage =
   | { type: "TRANSLATE_AND_RENAME"; text: string; options: RenameOptions; config: PluginConfig; addTextControlProperties?: boolean }
   | { type: "AUTO_NAME_FRAME"; config: PluginConfig }
   | { type: "ADD_TEXT_CONTROL_PROPERTIES" }
-  | { type: "CREATE_VARIANTS"; mode?: VariantMode; baseMode?: VariantBaseMode; styleMode?: VariantStyleMode }
+  | { type: "CREATE_VARIANTS"; mode?: VariantMode; baseMode?: VariantBaseMode; styleMode?: VariantStyleMode; applyStateLayerVisibility?: boolean }
   | { type: "INSERT_TEMPLATE"; templateId: string; config: PluginConfig }
   | { type: "RESIZE_UI"; width: number; height: number };
 
@@ -414,7 +415,8 @@ export const defaultConfig: PluginConfig = {
     removeMaskNodes: true,
     addTextControlProperties: false,
     addImageControlProperties: false
-  }
+  },
+  variantStateLayerVisibilityEnabled: false
 };
 
 export const localTestConfig: Partial<PluginConfig> = __LOCAL_TEST_CONFIG__ ?? {};
