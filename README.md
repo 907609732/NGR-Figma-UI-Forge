@@ -4,7 +4,7 @@
   <p><strong>NGR Figma UI 锻造台</strong> — 面向游戏 UI 生产流程的 Figma 效率插件。</p>
   <p>把节点命名、翻译、共享属性、画板整理、程序控制属性、组件变体和模板插入集中到一个工作台。</p>
   <p>
-    <a href="https://github.com/907609732/NGR-Figma-UI-Forge/releases/tag/v0.1.55">下载正式版</a>
+    <a href="https://github.com/907609732/NGR-Figma-UI-Forge/releases/tag/v0.1.56">下载正式版</a>
     ·
     <a href="https://figma.lttlt.top/">官方网站</a>
     ·
@@ -20,18 +20,26 @@
 
 NGR Figma UI Forge 用于减少游戏 UI 设计和交付中的重复操作。设计师可以在 Figma 内完成规范命名、属性复用、画板整理和组件状态制作，并把结果交给程序或其他测试电脑继续验证。
 
-当前正式版本为 **v0.1.55**，支持 Figma Desktop 导入测试。
+当前正式版本为 **v0.1.56**，支持 Figma Desktop 导入测试。
 
 ## 核心能力
 
 - **节点命名与中文翻译**：根据节点类型推荐词库，支持百度翻译、OpenAI 和 Kimi 辅助命名。
 - **共享属性方案**：复用字体、字号、行高、颜色、透明度、位置、约束和圆角等常用属性。
 - **一键整理画板**：按规则处理隐藏节点、Group、Mask、画板命名和程序控制属性。
-- **程序控制属性**：为文本和图片节点写入项目可识别的 Figma Plugin Data。
+- **程序控制属性**：可批量给当前多选节点写入程序控制，也可递归为文本和图片写入专用 Figma Plugin Data。
 - **一键变体**：生成跳转按钮、选择按钮、Checked、Style 和 Disabled 等组合状态。
 - **状态层自动切换**：按后代节点名精确控制 `Hover`、`Pressed`、`Disabled` 状态层。
+- **标准按钮结构**：可为新建状态变体自动整理 `Content` + `HotZone`，并给热区挂程序控制和按钮属性。
 - **模板插入**：支持 Figma Library Component Key 和内置 PC、IOS 画板模板。
 - **配置持久化**：词库、属性方案、API 配置和功能开关保存在当前设备。
+
+## v0.1.56 更新重点
+
+- 一键变体新增可选的“生成标准按钮结构”，自动整理根层 `Content` + `HotZone`。
+- `HotZone` 自动覆盖组件全尺寸、置于最上层，并写入程序控制与按钮属性。
+- 已有标准节点会复用补齐，关闭开关时不改动原结构，失败时恢复源组件。
+- 变体功能移动到插件第一页，并新增批量给当前多选节点添加程序控制。
 
 ## v0.1.55 更新重点
 
@@ -56,11 +64,13 @@ NGR Figma UI Forge 用于减少游戏 UI 设计和交付中的重复操作。设
 - `Icon_Hover` 等非精确名称不会被修改。
 - 已有 Component Set 追加 Style 时不会启用该功能。
 
+一键变体还可启用“生成标准按钮结构”。每个新建状态变体会把原内容包进根层 `Content`，并把全尺寸透明 `HotZone` 放在根层最上方。已有根层同名 Frame 会复用并补齐，缺失节点自动创建；`HotZone` 会写入 `CMVarPropertyData` 与 `CMButtonPropertyData`。该选项默认关闭、记住上次选择，仅 Style 和已有 Component Set 追加 Style 时不生效。
+
 ## 下载与安装
 
 ### 推荐：GitHub Release
 
-1. 下载 [NGR Figma UI Forge v0.1.55 正式版 ZIP](https://github.com/907609732/NGR-Figma-UI-Forge/releases/download/v0.1.55/NGR-Figma-UI-Forge-v0.1.55.zip)。
+1. 下载 [NGR Figma UI Forge v0.1.56 正式版 ZIP](https://github.com/907609732/NGR-Figma-UI-Forge/releases/download/v0.1.56/NGR-Figma-UI-Forge-v0.1.56.zip)。
 2. 将 ZIP 解压到任意固定目录。
 3. 打开 Figma Desktop。
 4. 进入“插件 → 开发 → 从 manifest 导入插件”。
@@ -71,7 +81,7 @@ NGR Figma UI Forge 用于减少游戏 UI 设计和交付中的重复操作。设
 
 ### 本地便携包
 
-仓库中的 [`正式版软件/NGR-Figma-UI-Forge-v0.1.55`](./正式版软件/NGR-Figma-UI-Forge-v0.1.55) 与 Release 对应，可直接复制或压缩到其他电脑。
+仓库中的 [`正式版软件/NGR-Figma-UI-Forge-v0.1.56`](./正式版软件/NGR-Figma-UI-Forge-v0.1.56) 与 Release 对应，可直接复制或压缩到其他电脑。
 
 ## 使用说明
 
@@ -131,7 +141,7 @@ npm.cmd test
 
 ## 版本信息
 
-- 当前版本：`v0.1.55`
+- 当前版本：`v0.1.56`
 - 更新日期：`2026-08-20`
 - 仓库：[`907609732/NGR-Figma-UI-Forge`](https://github.com/907609732/NGR-Figma-UI-Forge)
 - Release ZIP SHA-256：`B07B6B978880E41EF1661612C1A75B0825D49BC5ED7EE2F27BFC3EFADA28F7C6`

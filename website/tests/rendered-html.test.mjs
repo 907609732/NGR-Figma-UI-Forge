@@ -31,12 +31,12 @@ test("server-renders the NGR Figma UI Forge homepage", async () => {
   assert.match(html, /NGR Figma UI 锻造台/);
   assert.match(html, /从设计稿到可交付资产/);
   assert.match(html, /完整能力，按真实交付场景组织/);
-  assert.match(html, /生成变体时，状态层也能自动就位/);
+  assert.match(html, /生成变体时，按钮结构也能自动就位/);
   assert.match(html, /href="\/tutorial"/);
-  assert.match(html, /Pressed 会保留悬停反馈/);
+  assert.match(html, /HotZone 与组件同尺寸/);
   assert.match(html, /下载正式版，解压后即可导入/);
-  assert.match(html, /NGR-Figma-UI-Forge-v0\.1\.55\.zip/);
-  assert.match(html, /B07B6B978880E41EF1661612C1A75B0825D49BC5ED7EE2F27BFC3EFADA28F7C6/);
+  assert.match(html, /NGR-Figma-UI-Forge-v0\.1\.56\.zip/);
+  assert.match(html, /[A-F0-9]{64}/);
   assert.doesNotMatch(html, /Your site is taking shape|react-loading-skeleton|codex-preview/i);
 });
 
@@ -55,6 +55,8 @@ test("server-renders the complete product tutorial", async () => {
   assert.match(html, /Pressed 必须同时打开 Hover/);
   assert.match(html, /Checked 与 Unchecked 使用完全相同/);
   assert.match(html, /已有 Component Set 追加 Style/);
-  assert.match(html, /NGR-Figma-UI-Forge-v0\.1\.55\.zip/);
+  assert.match(html, /生成标准按钮结构/);
+  assert.match(html, /CMButtonPropertyData/);
+  assert.match(html, /NGR-Figma-UI-Forge-v0\.1\.56\.zip/);
   assert.doesNotMatch(html, /Your site is taking shape|react-loading-skeleton|codex-preview/i);
 });

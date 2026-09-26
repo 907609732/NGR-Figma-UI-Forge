@@ -1,8 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
 
-const downloadUrl = "https://github.com/907609732/NGR-Figma-UI-Forge/releases/download/v0.1.55/NGR-Figma-UI-Forge-v0.1.55.zip";
-const releaseUrl = "https://github.com/907609732/NGR-Figma-UI-Forge/releases/tag/v0.1.55";
+const downloadUrl = "https://github.com/907609732/NGR-Figma-UI-Forge/releases/download/v0.1.56/NGR-Figma-UI-Forge-v0.1.56.zip";
+const releaseUrl = "https://github.com/907609732/NGR-Figma-UI-Forge/releases/tag/v0.1.56";
 
 const capabilities = [
   {
@@ -42,10 +42,10 @@ const capabilities = [
   },
   {
     index: "06",
-    title: "模板、一键变体与状态层",
+    title: "模板、一键变体与标准按钮",
     tag: "COMPONENT",
-    body: "导入 Library 或内置画板模板，批量生成 State、Checked 和 Style 组合；还可按节点名自动切换 Hover、Pressed、Disabled 状态层。",
-    meta: "TEMPLATE / VARIANT SET / STATE LAYERS",
+    body: "导入 Library 或内置画板模板，批量生成 State、Checked 和 Style 组合；还可自动整理 Content、HotZone 与状态层。",
+    meta: "TEMPLATE / VARIANT SET / BUTTON STRUCTURE",
   },
 ];
 
@@ -58,24 +58,24 @@ const workflow = [
 
 const releaseFeatures = [
   {
-    label: "NORMAL",
-    title: "关闭全部状态层",
-    body: "生成 Normal 变体时，关闭精确命名为 Hover、Pressed、Disabled 的节点。",
+    label: "CONTENT",
+    title: "原内容自动归入 Content",
+    body: "生成状态变体时，插件会创建或复用根层 Content，并按原顺序包裹组件内容。",
   },
   {
-    label: "HOVER",
-    title: "只打开 Hover",
-    body: "生成 Hover 变体时，仅打开 Hover；重复或嵌套的精确同名节点会一起处理。",
+    label: "HOTZONE",
+    title: "全尺寸热区自动置顶",
+    body: "HotZone 与组件同尺寸，透明无描边、横纵 Stretch，并固定为根层最上方节点。",
   },
   {
-    label: "PRESSED",
-    title: "同时打开 Hover 与 Pressed",
-    body: "Pressed 会保留悬停反馈，并在存在 Pressed 节点时同步打开按下层。",
+    label: "CONTROL",
+    title: "自动挂程序与按钮属性",
+    body: "HotZone 自动写入程序控制和按钮属性，同时保留已有的其他插件数据。",
   },
   {
-    label: "DISABLED",
-    title: "只打开 Disabled",
-    body: "生成 Disabled 变体时仅打开 Disabled；缺少对应节点会跳过，不中断生成。",
+    label: "SAFE",
+    title: "复用补齐与失败恢复",
+    body: "已有 Content、HotZone 会复用补齐；关闭开关不改结构，生成失败会恢复源组件。",
   },
 ];
 
@@ -99,6 +99,10 @@ const faqs = [
   {
     q: "一键变体会自动修改状态层吗？",
     a: "这是默认关闭的可选功能，只用于 Frame 或独立 Component 新建变体。开启后会递归精确匹配 Hover、Pressed、Disabled；Pressed 会同时打开 Hover 和已有的 Pressed。",
+  },
+  {
+    q: "一键变体会自动生成按钮热区吗？",
+    a: "可以。开启“生成标准按钮结构”后，每个新建状态变体会整理为 Content + HotZone；HotZone 自动置顶并挂程序控制和按钮属性。该选项默认关闭。",
   },
 ];
 
@@ -135,12 +139,12 @@ export default function Home() {
             把节点命名、中文翻译、属性方案、画板整理、模板与变体，锻造成一条团队可复用的 UI 交付流程。
           </p>
           <div className="heroActions">
-            <a className="primaryAction" href={downloadUrl}>下载 v0.1.55</a>
+            <a className="primaryAction" href={downloadUrl}>下载 v0.1.56</a>
             <Link className="secondaryAction" href="/tutorial">查看完整教程</Link>
           </div>
           <div className="releaseLine" aria-label="当前版本">
-            <span>V0.1.55</span>
-            <span>UPDATED 2026.08.20</span>
+            <span>V0.1.56</span>
+            <span>UPDATED 2026.09.26</span>
             <span>INTERNAL TOOL</span>
           </div>
         </div>
@@ -191,11 +195,11 @@ export default function Home() {
 
       <section className="releaseFeature sectionBand" aria-labelledby="state-layer-title">
         <div className="sectionIntro wide">
-          <p className="eyebrow">NEW IN V0.1.54 / VARIANT STATE LAYERS</p>
-          <h2 id="state-layer-title">生成变体时，状态层也能自动就位。</h2>
+          <p className="eyebrow">NEW IN V0.1.56 / STANDARD BUTTON STRUCTURE</p>
+          <h2 id="state-layer-title">生成变体时，按钮结构也能自动就位。</h2>
           <p>
-            开启“按节点名切换状态层”后，插件会递归精确匹配 Hover、Pressed、Disabled。
-            Checked 与 Unchecked 使用同一套 State 规则，Style 组合也会保持一致。
+            开启“生成标准按钮结构”后，插件会把原内容归入 Content，并在根层最上方创建或补全 HotZone。
+            热区会自动获得程序控制和按钮属性，也可与状态层自动切换同时使用。
           </p>
         </div>
         <div className="releaseFeatureGrid">
@@ -208,8 +212,8 @@ export default function Home() {
           ))}
         </div>
         <div className="releaseFeatureNote">
-          <strong>精确、安全、可选</strong>
-          <p>Icon_Hover 等非精确名称不会被修改；已有 Component Set 追加 Style 时该选项自动禁用。</p>
+          <strong>标准、安全、可选</strong>
+          <p>功能默认关闭并记住选择；仅 Style 与已有 Component Set 追加 Style 时自动禁用。</p>
           <Link href="/tutorial#variants">查看一键变体教程 →</Link>
         </div>
       </section>
@@ -234,20 +238,20 @@ export default function Home() {
 
       <section id="download" className="install sectionBand">
         <div className="sectionIntro wide">
-          <p className="eyebrow">DOWNLOAD / V0.1.55</p>
+          <p className="eyebrow">DOWNLOAD / V0.1.56</p>
           <h2>下载正式版，解压后即可导入。</h2>
           <p>正式包只包含插件运行所需的 4 个文件，不包含源码、依赖、API 密钥或本机配置。</p>
         </div>
         <div className="downloadPanel">
           <div className="downloadMeta">
             <span className="downloadBadge">LATEST</span>
-            <div><strong>NGR Figma UI Forge v0.1.55</strong><p>Windows / macOS · Figma Desktop · ZIP 44.4 KB</p></div>
+            <div><strong>NGR Figma UI Forge v0.1.56</strong><p>Windows / macOS · Figma Desktop · ZIP 46.6 KB</p></div>
           </div>
           <div className="downloadActions">
             <a className="primaryAction" href={downloadUrl}>直接下载 ZIP</a>
             <a className="secondaryAction" href={releaseUrl} target="_blank" rel="noreferrer">查看 Release</a>
           </div>
-          <p className="checksum"><span>SHA-256</span><code>B07B6B978880E41EF1661612C1A75B0825D49BC5ED7EE2F27BFC3EFADA28F7C6</code></p>
+          <p className="checksum"><span>SHA-256</span><code>AD1FA858242090C0F86805FEDDD1994CF8E7C0CA351AC02FDE7FFF87993F60B9</code></p>
         </div>
         <ol className="installSteps">
           <li><span>01</span><h3>下载并完整解压</h3><p>不要直接在压缩包中运行；将 4 个文件解压到一个固定目录。</p></li>
@@ -287,9 +291,9 @@ export default function Home() {
         </a>
         <div className="footerLinks">
           <Link href="/tutorial">使用教程</Link>
-          <a href={downloadUrl}>下载 v0.1.55</a>
+          <a href={downloadUrl}>下载 v0.1.56</a>
           <a href="https://github.com/907609732/NGR-Figma-UI-Forge" target="_blank" rel="noreferrer">GitHub</a>
-          <span>V0.1.55 · 2026.08.20</span>
+          <span>V0.1.56 · 2026.09.26</span>
         </div>
       </footer>
     </main>

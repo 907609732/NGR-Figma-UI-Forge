@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 
-const downloadUrl = "https://github.com/907609732/NGR-Figma-UI-Forge/releases/download/v0.1.55/NGR-Figma-UI-Forge-v0.1.55.zip";
+const downloadUrl = "https://github.com/907609732/NGR-Figma-UI-Forge/releases/download/v0.1.56/NGR-Figma-UI-Forge-v0.1.56.zip";
 
 const chapters = [
   { href: "#install", label: "01 下载与安装" },
@@ -52,11 +52,11 @@ export default function TutorialPage() {
 
       <section className="tutorialHero">
         <div>
-          <p className="eyebrow">PRODUCT DOCUMENTATION / V0.1.55</p>
+          <p className="eyebrow">PRODUCT DOCUMENTATION / V0.1.56</p>
           <h1>从下载安装，到完成一次稳定交付。</h1>
-          <p>这份手册对应软件 v0.1.55 的真实界面，完整说明选区识别、命名、翻译、属性、画板整理、程序属性、模板、一键变体和设置迁移。</p>
+          <p>这份手册对应软件 v0.1.56 的真实界面，完整说明选区识别、命名、翻译、属性、画板整理、程序属性、模板、一键变体和设置迁移。</p>
           <div className="heroActions">
-            <a className="primaryAction" href={downloadUrl}>下载 v0.1.55</a>
+            <a className="primaryAction" href={downloadUrl}>下载 v0.1.56</a>
             <a className="secondaryAction" href="#variants">查看状态层规则</a>
           </div>
         </div>
@@ -78,13 +78,13 @@ export default function TutorialPage() {
             <h2>下载正式版并导入 Figma Desktop</h2>
             <p className="docLead">正式版 ZIP 只有 manifest.json、code.js、ui.html 和 README.md，可以复制到其他电脑直接测试。</p>
             <StepList items={[
-              "点击“下载 v0.1.55”，将 NGR-Figma-UI-Forge-v0.1.55.zip 保存到电脑。",
+              "点击“下载 v0.1.56”，将 NGR-Figma-UI-Forge-v0.1.56.zip 保存到电脑。",
               "完整解压 ZIP 到固定目录，不要删除或单独移动其中任何一个文件。",
               "打开 Figma Desktop，进入 Plugins → Development → Import plugin from manifest。",
               "选择解压目录中的 manifest.json，再从 Development 列表启动“NGR Figma UI 锻造台”。",
             ]} />
             <div className="docCallout"><strong>更新插件</strong><p>下载新版本后，用新目录重新导入一次 manifest；确认设置页显示目标版本后，再删除旧目录。</p></div>
-            <div className="docCallout warning"><strong>完整性校验</strong><p>v0.1.55 ZIP 的 SHA-256 是 B07B6B978880E41EF1661612C1A75B0825D49BC5ED7EE2F27BFC3EFADA28F7C6。</p></div>
+            <div className="docCallout warning"><strong>完整性校验</strong><p>v0.1.56 ZIP 的 SHA-256 是 AD1FA858242090C0F86805FEDDD1994CF8E7C0CA351AC02FDE7FFF87993F60B9。</p></div>
           </section>
 
           <section id="workspace" className="docSection">
@@ -205,6 +205,20 @@ export default function TutorialPage() {
               <li>已有 Component Set 追加 Style 时，该选项会禁用并保留原组件可见性。</li>
               <li>开关默认关闭并记住上次选择；关闭时完整保留原有可见性。</li>
             </ul>
+            <h3>可选：生成标准按钮结构</h3>
+            <p>开启后，每个新建状态变体都会整理成根层 Content + HotZone。原组件内容保持顺序移入 Content，HotZone 覆盖组件全尺寸并位于最上层。</p>
+            <div className="docGrid">
+              <div><strong>Content</strong><p>创建或复用根层同名 Frame，包裹组件的全部视觉与文字内容。</p></div>
+              <div><strong>HotZone</strong><p>全尺寸透明、无描边、横纵 Stretch，用作按钮交互热区。</p></div>
+              <div><strong>程序属性</strong><p>自动写入 CMVarPropertyData 与 CMButtonPropertyData，并保留其他已有数据。</p></div>
+              <div><strong>安全恢复</strong><p>已有结构会复用补齐；关闭不改结构，失败时恢复源组件。</p></div>
+            </div>
+            <ul className="docBullets">
+              <li>根层名称匹配忽略大小写和首尾空格，但同名节点必须是 Frame 才会作为标准容器复用。</li>
+              <li>HotZone 内已有内容会移入 Content，确保热区本身保持空容器用途。</li>
+              <li>仅 Style 模式和已有 Component Set 追加 Style 时，该选项自动禁用。</li>
+              <li>该开关默认关闭并记住上次选择，可与状态层自动切换同时开启。</li>
+            </ul>
           </section>
 
           <section id="templates" className="docSection">
@@ -259,7 +273,8 @@ export default function TutorialPage() {
               <details><summary>翻译失败会不会破坏画板？<span>+</span></summary><p>画板整理会尽量使用原名称继续；请到设置页检查百度翻译配置和网络权限。</p></details>
               <details><summary>为什么文本属性没有写入？<span>+</span></summary><p>节点可能已有富文本或滚动数字属性，插件会跳过冲突的文本属性；同时检查选区内是否确实包含 TEXT 节点。</p></details>
               <details><summary>为什么 Library 模板无法插入？<span>+</span></summary><p>确认组件已发布到可访问的 Figma Library、Component Key 正确，并检查当前账号是否有该 Library 权限。</p></details>
-              <details><summary>如何确认自己使用的是新版本？<span>+</span></summary><p>打开插件设置页的软件信息，版本应显示 0.1.55，发布日期为 2026-08-20。</p></details>
+              <details><summary>为什么没有生成 Content 和 HotZone？<span>+</span></summary><p>确认“生成标准按钮结构”已开启，并且当前选择是 Frame 或独立 Component；仅 Style 和已有 Component Set 追加 Style 不适用。</p></details>
+              <details><summary>如何确认自己使用的是新版本？<span>+</span></summary><p>打开插件设置页的软件信息，版本应显示 0.1.56，发布日期为 2026-09-26。</p></details>
             </div>
           </section>
 
@@ -267,7 +282,7 @@ export default function TutorialPage() {
             <p className="docKicker">READY TO FORGE</p>
             <h2>下载正式版，回到 Figma 把规范交给工具。</h2>
             <div className="heroActions closingActions">
-              <a className="primaryAction" href={downloadUrl}>下载 v0.1.55</a>
+              <a className="primaryAction" href={downloadUrl}>下载 v0.1.56</a>
               <Link className="secondaryAction" href="/">返回产品首页</Link>
             </div>
           </section>

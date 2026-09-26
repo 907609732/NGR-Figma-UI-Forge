@@ -123,11 +123,14 @@ export interface PluginConfig {
   propertyPresets: PropertyPreset[];
   activePropertyPresetId: string;
   applyPropertiesOnRename: boolean;
+  namingTranslateExpanded: boolean;
+  namingWorkspaceMode: "terms" | "preset";
   templates: TemplateEntry[];
   aiSettings: AiSettings;
   translateSettings: TranslateSettings;
   autoNameFrameSettings: AutoNameFrameSettings;
   variantStateLayerVisibilityEnabled: boolean;
+  variantButtonStructureEnabled: boolean;
 }
 
 declare const __LOCAL_TEST_CONFIG__: Partial<PluginConfig> | null;
@@ -159,8 +162,9 @@ export type UiToPluginMessage =
   | { type: "GENERATE_AI_NAMES"; options: RenameOptions; config: PluginConfig }
   | { type: "TRANSLATE_AND_RENAME"; text: string; options: RenameOptions; config: PluginConfig; addTextControlProperties?: boolean }
   | { type: "AUTO_NAME_FRAME"; config: PluginConfig }
+  | { type: "ADD_PROGRAM_CONTROL_TO_SELECTION" }
   | { type: "ADD_TEXT_CONTROL_PROPERTIES" }
-  | { type: "CREATE_VARIANTS"; mode?: VariantMode; baseMode?: VariantBaseMode; styleMode?: VariantStyleMode; applyStateLayerVisibility?: boolean }
+  | { type: "CREATE_VARIANTS"; mode?: VariantMode; baseMode?: VariantBaseMode; styleMode?: VariantStyleMode; applyStateLayerVisibility?: boolean; applyButtonStructure?: boolean }
   | { type: "INSERT_TEMPLATE"; templateId: string; config: PluginConfig }
   | { type: "RESIZE_UI"; width: number; height: number };
 
@@ -353,6 +357,8 @@ export const defaultConfig: PluginConfig = {
   ],
   activePropertyPresetId: "text-center",
   applyPropertiesOnRename: true,
+  namingTranslateExpanded: false,
+  namingWorkspaceMode: "terms",
   templates: [
     {
       id: "tpl-library-pc",
@@ -416,7 +422,8 @@ export const defaultConfig: PluginConfig = {
     addTextControlProperties: false,
     addImageControlProperties: false
   },
-  variantStateLayerVisibilityEnabled: false
+  variantStateLayerVisibilityEnabled: false,
+  variantButtonStructureEnabled: false
 };
 
 export const localTestConfig: Partial<PluginConfig> = __LOCAL_TEST_CONFIG__ ?? {};

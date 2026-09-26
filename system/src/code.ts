@@ -23,8 +23,9 @@ const CM_PROPERTY_DATA_KEY = "CMPropertyDataContainer";
 const CM_VAR_PROPERTY_KEY = "CMVarPropertyData";
 const CM_TEXT_PROPERTY_KEY = "CMTextPropertyData";
 const CM_IMAGE_PROPERTY_KEY = "CMImagePropertyData";
+const CM_BUTTON_PROPERTY_KEY = "CMButtonPropertyData";
 
-figma.showUI(__html__, { width: 560, height: 720, themeColors: true });
+figma.showUI(__html__, { width: 420, height: 820, themeColors: true });
 
 void initialize();
 
@@ -137,17 +138,29 @@ figma.ui.onmessage = async (message: UiToPluginMessage) => {
       return;
     }
 
+    if (message.type === "ADD_PROGRAM_CONTROL_TO_SELECTION") {
+      const result = await addProgramControlToCurrentSelection();
+      const messageText = `批量程序控制完成：已选 ${result.total} 个节点，新增 ${result.added} 个，已存在 ${result.existing} 个，失败 ${result.failed} 个`;
+      post({ type: "APPLY_RESULT", message: messageText });
+      figma.notify(messageText);
+      return;
+    }
+
     if (message.type === "CREATE_VARIANTS") {
       const result = await createVariants(
         message.baseMode ?? message.mode ?? "three",
         message.styleMode ?? "none",
-        message.applyStateLayerVisibility ?? false
+        message.applyStateLayerVisibility ?? false,
+        message.applyButtonStructure ?? false
       );
       const prefix = result.appendedStyle ? "已追加 Style，并" : result.convertedFrame ? "已将 Frame 转为 Component，并" : "";
       const layerSuffix = result.stateLayerApplied
         ? `；状态层匹配 ${result.stateLayerMatches} 个，切换 ${result.stateLayerChanges} 次`
         : "";
-      post({ type: "APPLY_RESULT", message: `${prefix}制作 ${result.count} 个变体：${result.name}${layerSuffix}` });
+      const structureSuffix = result.buttonStructureApplied
+        ? `；按钮结构 ${result.buttonStructures} 个，新增 Content ${result.contentCreated} 个、新增 HotZone ${result.hotZoneCreated} 个，补齐属性 ${result.hotZonePropertiesAdded} 项`
+        : "";
+      post({ type: "APPLY_RESULT", message: `${prefix}制作 ${result.count} 个变体：${result.name}${layerSuffix}${structureSuffix}` });
       figma.notify(`${prefix}制作 ${result.count} 个变体`);
       return;
     }
@@ -214,11 +227,14 @@ function normalizeConfig(input: unknown): PluginConfig {
     propertyPresets,
     activePropertyPresetId,
     applyPropertiesOnRename: partial.applyPropertiesOnRename ?? true,
+    namingTranslateExpanded: partial.namingTranslateExpanded ?? false,
+    namingWorkspaceMode: partial.namingWorkspaceMode === "preset" ? "preset" : "terms",
     templates: normalizeTemplates(partial.templates),
     aiSettings: normalizedAiSettings,
     translateSettings: normalizedTranslateSettings,
     autoNameFrameSettings: normalizedAutoNameFrameSettings,
-    variantStateLayerVisibilityEnabled: partial.variantStateLayerVisibilityEnabled ?? false
+    variantStateLayerVisibilityEnabled: partial.variantStateLayerVisibilityEnabled ?? false,
+    variantButtonStructureEnabled: partial.variantButtonStructureEnabled ?? false
   };
 }
 
@@ -456,10 +472,50 @@ interface StateLayerVisibilityResult {
   changes: number;
 }
 
+interface ButtonStructureResult {
+  contentCreated: number;
+  hotZoneCreated: number;
+  hotZonePropertiesAdded: number;
+}
+
+interface MovedNodeSnapshot {
+  node: SceneNode;
+  parent: BaseNode & ChildrenMixin;
+  index: number;
+  x: number;
+  y: number;
+}
+
+interface ButtonFrameSnapshot {
+  node: FrameNode;
+  name: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  fills: readonly Paint[];
+  strokes: readonly Paint[];
+  clipsContent: boolean;
+  constraints: Constraints;
+  layoutMode: AutoLayoutMixin["layoutMode"];
+  visible: boolean;
+  opacity: number;
+  locked: boolean;
+  pluginData: string;
+}
+
+interface ButtonStructureSnapshot {
+  rootChildren: SceneNode[];
+  movedNodes: MovedNodeSnapshot[];
+  frameSnapshots: ButtonFrameSnapshot[];
+  createdNodes: FrameNode[];
+}
+
 async function createVariants(
   baseMode: VariantBaseMode,
   styleMode: VariantStyleMode,
-  applyStateLayerVisibility = false
+  applyStateLayerVisibility = false,
+  applyButtonStructure = false
 ): Promise<{
   count: number;
   name: string;
@@ -468,6 +524,11 @@ async function createVariants(
   stateLayerApplied: boolean;
   stateLayerMatches: number;
   stateLayerChanges: number;
+  buttonStructureApplied: boolean;
+  buttonStructures: number;
+  contentCreated: number;
+  hotZoneCreated: number;
+  hotZonePropertiesAdded: number;
 }> {
   await ensureCurrentPageLoaded();
   const selection = Array.from(figma.currentPage.selection);
@@ -487,7 +548,12 @@ async function createVariants(
       appendedStyle: true,
       stateLayerApplied: false,
       stateLayerMatches: 0,
-      stateLayerChanges: 0
+      stateLayerChanges: 0,
+      buttonStructureApplied: false,
+      buttonStructures: 0,
+      contentCreated: 0,
+      hotZoneCreated: 0,
+      hotZonePropertiesAdded: 0
     };
   }
 
@@ -507,9 +573,15 @@ async function createVariants(
   const components: ComponentNode[] = [];
   const clones: ComponentNode[] = [];
   const shouldApplyStateLayers = applyStateLayerVisibility && baseMode !== "style-only";
+  const shouldApplyButtonStructure = applyButtonStructure && baseMode !== "style-only";
   const sourceStateLayerSnapshot = shouldApplyStateLayers ? snapshotStateLayerVisibility(source) : [];
+  const sourceButtonStructureSnapshot = shouldApplyButtonStructure ? snapshotButtonStructure(source) : null;
   let stateLayerMatches = 0;
   let stateLayerChanges = 0;
+  let buttonStructures = 0;
+  let contentCreated = 0;
+  let hotZoneCreated = 0;
+  let hotZonePropertiesAdded = 0;
 
   try {
     for (let index = 0; index < definitions.length; index += 1) {
@@ -519,6 +591,13 @@ async function createVariants(
         clones.push(component);
       }
       component.name = variantComponentName(definitions[index]);
+      if (shouldApplyButtonStructure) {
+        const structureResult = ensureButtonStructure(component, index === 0 ? sourceButtonStructureSnapshot! : undefined);
+        buttonStructures += 1;
+        contentCreated += structureResult.contentCreated;
+        hotZoneCreated += structureResult.hotZoneCreated;
+        hotZonePropertiesAdded += structureResult.hotZonePropertiesAdded;
+      }
       if (shouldApplyStateLayers) {
         const layerResult = applyStateLayerVisibilityForDefinition(component, definitions[index]);
         stateLayerMatches += layerResult.matches;
@@ -540,15 +619,177 @@ async function createVariants(
       appendedStyle: false,
       stateLayerApplied: shouldApplyStateLayers,
       stateLayerMatches,
-      stateLayerChanges
+      stateLayerChanges,
+      buttonStructureApplied: shouldApplyButtonStructure,
+      buttonStructures,
+      contentCreated,
+      hotZoneCreated,
+      hotZonePropertiesAdded
     };
   } catch (error) {
     source.name = originalName;
     restoreStateLayerVisibility(sourceStateLayerSnapshot);
+    if (sourceButtonStructureSnapshot) restoreButtonStructure(source, sourceButtonStructureSnapshot);
     for (const clone of clones) {
       if (!clone.removed) clone.remove();
     }
     throw new Error(`制作变体失败：${errorMessage(error)}`);
+  }
+}
+
+function normalizedDirectChildName(node: SceneNode): string {
+  return node.name.trim().toLowerCase();
+}
+
+function directFrameByName(component: ComponentNode, name: "content" | "hotzone"): FrameNode | null {
+  const match = component.children.find((child) => child.type === "FRAME" && normalizedDirectChildName(child) === name);
+  return match?.type === "FRAME" ? match : null;
+}
+
+function snapshotButtonFrame(node: FrameNode): ButtonFrameSnapshot {
+  return {
+    node,
+    name: node.name,
+    x: node.x,
+    y: node.y,
+    width: node.width,
+    height: node.height,
+    fills: Array.isArray(node.fills) ? node.fills : [],
+    strokes: Array.isArray(node.strokes) ? node.strokes : [],
+    clipsContent: node.clipsContent,
+    constraints: node.constraints,
+    layoutMode: node.layoutMode,
+    visible: node.visible,
+    opacity: node.opacity,
+    locked: node.locked,
+    pluginData: node.getPluginData(CM_PROPERTY_DATA_KEY)
+  };
+}
+
+function snapshotButtonStructure(component: ComponentNode): ButtonStructureSnapshot {
+  const content = directFrameByName(component, "content");
+  const hotZone = directFrameByName(component, "hotzone");
+  return {
+    rootChildren: Array.from(component.children),
+    movedNodes: [],
+    frameSnapshots: [content, hotZone].filter((node): node is FrameNode => Boolean(node)).map(snapshotButtonFrame),
+    createdNodes: []
+  };
+}
+
+function rememberMovedNode(snapshot: ButtonStructureSnapshot | undefined, node: SceneNode) {
+  if (!snapshot || !isChildrenContainer(node.parent)) return;
+  snapshot.movedNodes.push({
+    node,
+    parent: node.parent,
+    index: node.parent.children.indexOf(node),
+    x: node.x,
+    y: node.y
+  });
+}
+
+function normalizeButtonFrame(frame: FrameNode, name: "Content" | "HotZone", width: number, height: number, created: boolean) {
+  frame.name = name;
+  frame.x = 0;
+  frame.y = 0;
+  frame.resize(width, height);
+  frame.clipsContent = false;
+  frame.constraints = { horizontal: "STRETCH", vertical: "STRETCH" };
+  frame.visible = true;
+  frame.opacity = 1;
+  frame.locked = false;
+  if (created || name === "HotZone") {
+    frame.layoutMode = "NONE";
+    frame.fills = [];
+    frame.strokes = [];
+  }
+}
+
+function addHotZoneControlProperties(hotZone: FrameNode): number {
+  const container = readCMContainerStrict(hotZone);
+  let added = 0;
+  if (!Object.prototype.hasOwnProperty.call(container.PropertyDatas, CM_VAR_PROPERTY_KEY)) {
+    container.PropertyDatas[CM_VAR_PROPERTY_KEY] = {};
+    added += 1;
+  }
+  if (!Object.prototype.hasOwnProperty.call(container.PropertyDatas, CM_BUTTON_PROPERTY_KEY)) {
+    container.PropertyDatas[CM_BUTTON_PROPERTY_KEY] = {};
+    added += 1;
+  }
+  if (added) writeCMContainer(hotZone, container);
+  return added;
+}
+
+function ensureButtonStructure(component: ComponentNode, snapshot?: ButtonStructureSnapshot): ButtonStructureResult {
+  const originalChildren = Array.from(component.children);
+  let content = directFrameByName(component, "content");
+  let hotZone = directFrameByName(component, "hotzone");
+  let contentCreated = 0;
+  let hotZoneCreated = 0;
+
+  if (!content) {
+    content = figma.createFrame();
+    component.appendChild(content);
+    snapshot?.createdNodes.push(content);
+    contentCreated = 1;
+  }
+  if (!hotZone) {
+    hotZone = figma.createFrame();
+    component.appendChild(hotZone);
+    snapshot?.createdNodes.push(hotZone);
+    hotZoneCreated = 1;
+  }
+
+  normalizeButtonFrame(content, "Content", component.width, component.height, contentCreated === 1);
+  normalizeButtonFrame(hotZone, "HotZone", component.width, component.height, hotZoneCreated === 1);
+
+  for (const child of originalChildren) {
+    if (child === content || child === hotZone) continue;
+    rememberMovedNode(snapshot, child);
+    content.appendChild(child);
+  }
+  for (const child of Array.from(hotZone.children)) {
+    rememberMovedNode(snapshot, child);
+    content.appendChild(child);
+  }
+
+  component.insertChild(0, content);
+  component.appendChild(hotZone);
+  const hotZonePropertiesAdded = addHotZoneControlProperties(hotZone);
+  return { contentCreated, hotZoneCreated, hotZonePropertiesAdded };
+}
+
+function restoreButtonStructure(component: ComponentNode, snapshot: ButtonStructureSnapshot) {
+  for (const moved of [...snapshot.movedNodes].reverse()) {
+    if (moved.node.removed || moved.parent.removed) continue;
+    moved.parent.insertChild(Math.min(moved.index, moved.parent.children.length), moved.node);
+    moved.node.x = moved.x;
+    moved.node.y = moved.y;
+  }
+  for (const child of snapshot.rootChildren) {
+    if (!child.removed) component.appendChild(child);
+  }
+  snapshot.rootChildren.forEach((child, index) => {
+    if (!child.removed && child.parent === component) component.insertChild(index, child);
+  });
+  for (const frame of snapshot.frameSnapshots) {
+    if (frame.node.removed) continue;
+    frame.node.name = frame.name;
+    frame.node.x = frame.x;
+    frame.node.y = frame.y;
+    frame.node.resize(frame.width, frame.height);
+    frame.node.clipsContent = frame.clipsContent;
+    frame.node.fills = frame.fills;
+    frame.node.strokes = frame.strokes;
+    frame.node.constraints = frame.constraints;
+    frame.node.layoutMode = frame.layoutMode;
+    frame.node.visible = frame.visible;
+    frame.node.opacity = frame.opacity;
+    frame.node.locked = frame.locked;
+    frame.node.setPluginData(CM_PROPERTY_DATA_KEY, frame.pluginData);
+  }
+  for (const created of snapshot.createdNodes) {
+    if (!created.removed) created.remove();
   }
 }
 
@@ -1007,6 +1248,20 @@ function readCMContainer(node: SceneNode): CMPropertyDataContainer {
   }
 }
 
+function readCMContainerStrict(node: SceneNode): CMPropertyDataContainer {
+  const raw = node.getPluginData(CM_PROPERTY_DATA_KEY);
+  if (!raw) return { PropertyDatas: {} };
+  const parsed: unknown = JSON.parse(raw);
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+    throw new Error("程序属性容器格式无效");
+  }
+  const propertyDatas = (parsed as Partial<CMPropertyDataContainer>).PropertyDatas;
+  if (!propertyDatas || typeof propertyDatas !== "object" || Array.isArray(propertyDatas)) {
+    throw new Error("程序属性容器缺少有效的 PropertyDatas");
+  }
+  return parsed as CMPropertyDataContainer;
+}
+
 function writeCMContainer(node: SceneNode, container: CMPropertyDataContainer) {
   node.setPluginData(CM_PROPERTY_DATA_KEY, JSON.stringify(container));
 }
@@ -1044,12 +1299,49 @@ type ImageControlPropertyResult = {
   conflicts: number;
 };
 
+type ProgramControlPropertyResult = {
+  total: number;
+  added: number;
+  existing: number;
+  failed: number;
+};
+
 function emptyTextControlPropertyResult(): TextControlPropertyResult {
   return { total: 0, textAdded: 0, varAdded: 0, existing: 0, conflicts: 0 };
 }
 
 function emptyImageControlPropertyResult(): ImageControlPropertyResult {
   return { total: 0, imageAdded: 0, varAdded: 0, existing: 0, conflicts: 0 };
+}
+
+async function addProgramControlToCurrentSelection(): Promise<ProgramControlPropertyResult> {
+  await ensureCurrentPageLoaded();
+  const selection = Array.from(figma.currentPage.selection);
+  if (!selection.length) {
+    throw new Error("请先在 Figma 画布中选择一个或多个节点");
+  }
+
+  let added = 0;
+  let existing = 0;
+  let failed = 0;
+
+  for (const node of selection) {
+    try {
+      const container = readCMContainerStrict(node);
+      if (Object.prototype.hasOwnProperty.call(container.PropertyDatas, CM_VAR_PROPERTY_KEY)) {
+        existing += 1;
+        continue;
+      }
+      container.PropertyDatas[CM_VAR_PROPERTY_KEY] = {};
+      writeCMContainer(node, container);
+      added += 1;
+    } catch {
+      failed += 1;
+    }
+  }
+
+  figma.currentPage.selection = selection;
+  return { total: selection.length, added, existing, failed };
 }
 
 async function addTextControlPropertiesToCurrentSelection(): Promise<TextControlPropertyResult> {
