@@ -179,6 +179,8 @@ figma.ui.onmessage = async (message: UiToPluginMessage) => {
 
 async function initialize() {
   const config = await loadConfig();
+  // Generating structural layers requires an explicit opt-in each plugin session.
+  config.variantButtonStructureEnabled = false;
   post({ type: "READY", config, selection: await getSelectionSummary() });
 }
 
@@ -464,8 +466,8 @@ async function translateAndRename(
 
 type VariantDefinition = Partial<Record<"State" | "Checked" | "Style", string>>;
 
-type StateLayerName = "hover" | "pressed" | "disabled";
-type StateLayerSnapshot = Array<{ node: SceneNode; visible: boolean }>;
+type StateLayerName = "normal" | "hover" | "pressed" | "disabled" | "checked";
+type LayerVisibilitySnapshot = Array<{ node: SceneNode; visible: boolean }>;
 
 interface StateLayerVisibilityResult {
   matches: number;
@@ -570,11 +572,13 @@ async function createVariants(
   const originalY = source.y;
   const parentIndex = parent.children.indexOf(source);
   const definitions = variantDefinitions(baseMode, styleMode);
+  const styleValues = variantStyleValues(styleMode);
   const components: ComponentNode[] = [];
   const clones: ComponentNode[] = [];
   const shouldApplyStateLayers = applyStateLayerVisibility && baseMode !== "style-only";
+  const shouldApplyStyleLayers = styleValues.length > 0;
   const shouldApplyButtonStructure = applyButtonStructure && baseMode !== "style-only";
-  const sourceStateLayerSnapshot = shouldApplyStateLayers ? snapshotStateLayerVisibility(source) : [];
+  const sourceLayerSnapshot = shouldApplyStateLayers || shouldApplyStyleLayers ? snapshotLayerVisibility(source) : [];
   const sourceButtonStructureSnapshot = shouldApplyButtonStructure ? snapshotButtonStructure(source) : null;
   let stateLayerMatches = 0;
   let stateLayerChanges = 0;
@@ -598,8 +602,10 @@ async function createVariants(
         hotZoneCreated += structureResult.hotZoneCreated;
         hotZonePropertiesAdded += structureResult.hotZonePropertiesAdded;
       }
+      const styleLayers = shouldApplyStyleLayers ? styleLayerNodes(component, definitions[index], styleValues) : [];
+      if (shouldApplyStyleLayers) applyStyleLayerVisibilityForDefinition(styleLayers, definitions[index]);
       if (shouldApplyStateLayers) {
-        const layerResult = applyStateLayerVisibilityForDefinition(component, definitions[index]);
+        const layerResult = applyStateLayerVisibilityForDefinition(component, definitions[index], new Set(styleLayers.map(({ node }) => node.id)));
         stateLayerMatches += layerResult.matches;
         stateLayerChanges += layerResult.changes;
       }
@@ -628,7 +634,7 @@ async function createVariants(
     };
   } catch (error) {
     source.name = originalName;
-    restoreStateLayerVisibility(sourceStateLayerSnapshot);
+    restoreLayerVisibility(sourceLayerSnapshot);
     if (sourceButtonStructureSnapshot) restoreButtonStructure(source, sourceButtonStructureSnapshot);
     for (const clone of clones) {
       if (!clone.removed) clone.remove();
@@ -795,7 +801,7 @@ function restoreButtonStructure(component: ComponentNode, snapshot: ButtonStruct
 
 function stateLayerName(name: string): StateLayerName | null {
   const normalized = name.trim().toLowerCase();
-  if (normalized === "hover" || normalized === "pressed" || normalized === "disabled") return normalized;
+  if (normalized === "normal" || normalized === "hover" || normalized === "pressed" || normalized === "disabled" || normalized === "checked") return normalized;
   return null;
 }
 
@@ -806,11 +812,11 @@ function stateLayerNodes(component: ComponentNode): Array<{ node: SceneNode; nam
   }));
 }
 
-function snapshotStateLayerVisibility(component: ComponentNode): StateLayerSnapshot {
-  return stateLayerNodes(component).map(({ node }) => ({ node, visible: node.visible }));
+function snapshotLayerVisibility(component: ComponentNode): LayerVisibilitySnapshot {
+  return component.findAll(() => true).map((node) => ({ node, visible: node.visible }));
 }
 
-function restoreStateLayerVisibility(snapshot: StateLayerSnapshot) {
+function restoreLayerVisibility(snapshot: LayerVisibilitySnapshot) {
   for (const entry of snapshot) {
     if (!entry.node.removed) entry.node.visible = entry.visible;
   }
@@ -818,17 +824,21 @@ function restoreStateLayerVisibility(snapshot: StateLayerSnapshot) {
 
 function applyStateLayerVisibilityForDefinition(
   component: ComponentNode,
-  definition: VariantDefinition
+  definition: VariantDefinition,
+  styleLayerIds: ReadonlySet<string> = new Set()
 ): StateLayerVisibilityResult {
   const state = (definition.State ?? "").trim().toLowerCase();
-  const layers = stateLayerNodes(component);
+  const checked = (definition.Checked ?? "").trim().toLowerCase();
+  const layers = stateLayerNodes(component).filter(({ node }) => !styleLayerIds.has(node.id));
   let changes = 0;
 
   for (const layer of layers) {
     const nextVisible =
+      layer.name === "normal" ||
       (layer.name === "hover" && (state === "hover" || state === "pressed")) ||
       (layer.name === "pressed" && state === "pressed") ||
-      (layer.name === "disabled" && state === "disabled");
+      (layer.name === "disabled" && state === "disabled") ||
+      (layer.name === "checked" && checked === "checked");
     if (layer.node.visible !== nextVisible) {
       layer.node.visible = nextVisible;
       changes += 1;
@@ -836,6 +846,37 @@ function applyStateLayerVisibilityForDefinition(
   }
 
   return { matches: layers.length, changes };
+}
+
+function styleLayerNodes(
+  component: ComponentNode,
+  definition: VariantDefinition,
+  values: string[]
+): Array<{ node: SceneNode; name: string }> {
+  const names = new Set(values.map((value) => value.trim().toLowerCase()));
+  // Normal also names the always-visible State base layer. With State present,
+  // only a Normal container holding its own state layers is a Style branch.
+  // A flat Normal base plus a Complete overlay keeps the existing State rules.
+  return component.findAll((node) => {
+    const name = normalizedDirectChildName(node);
+    if (!names.has(name)) return false;
+    if (name !== "normal") return true;
+    if (!isChildrenContainer(node.parent)) return false;
+    const hasStyleSibling = node.parent.children.some((sibling) => {
+      const siblingName = normalizedDirectChildName(sibling);
+      return siblingName !== "normal" && names.has(siblingName);
+    });
+    if (!hasStyleSibling) return false;
+    return !definition.State || (isChildrenContainer(node) && node.findAll((child) => stateLayerName(child.name) !== null).length > 0);
+  }).map((node) => ({ node, name: normalizedDirectChildName(node) }));
+}
+
+function applyStyleLayerVisibilityForDefinition(
+  layers: Array<{ node: SceneNode; name: string }>,
+  definition: VariantDefinition
+) {
+  const style = (definition.Style ?? "").trim().toLowerCase();
+  for (const layer of layers) layer.node.visible = layer.name === style;
 }
 
 function appendStyleVariants(componentSet: ComponentSetNode, styleMode: VariantStyleMode): { count: number } {
@@ -851,7 +892,8 @@ function appendStyleVariants(componentSet: ComponentSetNode, styleMode: VariantS
   const originalStates = originals.map((original) => ({
     original,
     name: original.name,
-    definition: variantDefinitionFromComponent(original)
+    definition: variantDefinitionFromComponent(original),
+    visibility: snapshotLayerVisibility(original)
   }));
   const clones: ComponentNode[] = [];
   try {
@@ -863,7 +905,9 @@ function appendStyleVariants(componentSet: ComponentSetNode, styleMode: VariantS
           componentSet.appendChild(target);
           clones.push(target);
         }
-        target.name = variantComponentName({ ...definition, Style: styleValues[styleIndex] });
+        const targetDefinition = { ...definition, Style: styleValues[styleIndex] };
+        target.name = variantComponentName(targetDefinition);
+        applyStyleLayerVisibilityForDefinition(styleLayerNodes(target, targetDefinition, styleValues), targetDefinition);
       }
     }
     arrangeVariantSet(componentSet);
@@ -873,7 +917,10 @@ function appendStyleVariants(componentSet: ComponentSetNode, styleMode: VariantS
       if (!clone.removed) clone.remove();
     }
     for (const state of originalStates) {
-      if (!state.original.removed) state.original.name = state.name;
+      if (!state.original.removed) {
+        state.original.name = state.name;
+        restoreLayerVisibility(state.visibility);
+      }
     }
     throw new Error(`追加 Style 变体失败：${errorMessage(error)}`);
   }

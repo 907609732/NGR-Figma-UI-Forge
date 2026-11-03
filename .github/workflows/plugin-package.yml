@@ -1,0 +1,45 @@
+name: Build plugin package
+
+on:
+  push:
+    branches: ['codex/release-*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: system/package-lock.json
+      - run: npm ci --registry=https://registry.npmjs.org
+        working-directory: system
+      - run: npm test
+        working-directory: system
+      - run: npm run typecheck
+        working-directory: system
+      - name: Package production plugin
+        shell: bash
+        run: |
+          VERSION=$(node -p "JSON.parse(require('fs').readFileSync('system/package.json')).version")
+          PACKAGE="NGR-Figma-UI-Forge-v$VERSION"
+          mkdir -p "out/$PACKAGE"
+          cp system/dist/code.js system/dist/ui.html "out/$PACKAGE/"
+          cp docs/RELEASE-PACKAGE.md "out/$PACKAGE/README.md"
+          node --input-type=module -e "import fs from 'node:fs'; const m=JSON.parse(fs.readFileSync('manifest.json')); m.main='code.js'; m.ui='ui.html'; fs.writeFileSync(process.argv[1], JSON.stringify(m,null,2)+'\n');" "out/$PACKAGE/manifest.json"
+          cd out
+          zip -r "$PACKAGE.zip" "$PACKAGE"
+          sha256sum "$PACKAGE.zip" > SHA256SUMS.txt
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: plugin-package
+          path: |
+            out/*.zip
+            out/SHA256SUMS.txt
+          if-no-files-found: error

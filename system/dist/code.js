@@ -420,6 +420,7 @@
   };
   async function initialize() {
     const config = await loadConfig();
+    config.variantButtonStructureEnabled = false;
     post({ type: "READY", config, selection: await getSelectionSummary() });
   }
   function post(message) {
@@ -712,11 +713,13 @@
     const originalY = source.y;
     const parentIndex = parent.children.indexOf(source);
     const definitions = variantDefinitions(baseMode, styleMode);
+    const styleValues = variantStyleValues(styleMode);
     const components = [];
     const clones = [];
     const shouldApplyStateLayers = applyStateLayerVisibility && baseMode !== "style-only";
+    const shouldApplyStyleLayers = styleValues.length > 0;
     const shouldApplyButtonStructure = applyButtonStructure && baseMode !== "style-only";
-    const sourceStateLayerSnapshot = shouldApplyStateLayers ? snapshotStateLayerVisibility(source) : [];
+    const sourceLayerSnapshot = shouldApplyStateLayers || shouldApplyStyleLayers ? snapshotLayerVisibility(source) : [];
     const sourceButtonStructureSnapshot = shouldApplyButtonStructure ? snapshotButtonStructure(source) : null;
     let stateLayerMatches = 0;
     let stateLayerChanges = 0;
@@ -739,8 +742,10 @@
           hotZoneCreated += structureResult.hotZoneCreated;
           hotZonePropertiesAdded += structureResult.hotZonePropertiesAdded;
         }
+        const styleLayers = shouldApplyStyleLayers ? styleLayerNodes(component, definitions[index], styleValues) : [];
+        if (shouldApplyStyleLayers) applyStyleLayerVisibilityForDefinition(styleLayers, definitions[index]);
         if (shouldApplyStateLayers) {
-          const layerResult = applyStateLayerVisibilityForDefinition(component, definitions[index]);
+          const layerResult = applyStateLayerVisibilityForDefinition(component, definitions[index], new Set(styleLayers.map(({ node }) => node.id)));
           stateLayerMatches += layerResult.matches;
           stateLayerChanges += layerResult.changes;
         }
@@ -768,7 +773,7 @@
       };
     } catch (error) {
       source.name = originalName;
-      restoreStateLayerVisibility(sourceStateLayerSnapshot);
+      restoreLayerVisibility(sourceLayerSnapshot);
       if (sourceButtonStructureSnapshot) restoreButtonStructure(source, sourceButtonStructureSnapshot);
       for (const clone of clones) {
         if (!clone.removed) clone.remove();
@@ -921,7 +926,7 @@
   }
   function stateLayerName(name) {
     const normalized = name.trim().toLowerCase();
-    if (normalized === "hover" || normalized === "pressed" || normalized === "disabled") return normalized;
+    if (normalized === "normal" || normalized === "hover" || normalized === "pressed" || normalized === "disabled" || normalized === "checked") return normalized;
     return null;
   }
   function stateLayerNodes(component) {
@@ -930,27 +935,48 @@
       name: stateLayerName(node.name)
     }));
   }
-  function snapshotStateLayerVisibility(component) {
-    return stateLayerNodes(component).map(({ node }) => ({ node, visible: node.visible }));
+  function snapshotLayerVisibility(component) {
+    return component.findAll(() => true).map((node) => ({ node, visible: node.visible }));
   }
-  function restoreStateLayerVisibility(snapshot) {
+  function restoreLayerVisibility(snapshot) {
     for (const entry of snapshot) {
       if (!entry.node.removed) entry.node.visible = entry.visible;
     }
   }
-  function applyStateLayerVisibilityForDefinition(component, definition) {
-    var _a;
+  function applyStateLayerVisibilityForDefinition(component, definition, styleLayerIds = /* @__PURE__ */ new Set()) {
+    var _a, _b;
     const state = ((_a = definition.State) != null ? _a : "").trim().toLowerCase();
-    const layers = stateLayerNodes(component);
+    const checked = ((_b = definition.Checked) != null ? _b : "").trim().toLowerCase();
+    const layers = stateLayerNodes(component).filter(({ node }) => !styleLayerIds.has(node.id));
     let changes = 0;
     for (const layer of layers) {
-      const nextVisible = layer.name === "hover" && (state === "hover" || state === "pressed") || layer.name === "pressed" && state === "pressed" || layer.name === "disabled" && state === "disabled";
+      const nextVisible = layer.name === "normal" || layer.name === "hover" && (state === "hover" || state === "pressed") || layer.name === "pressed" && state === "pressed" || layer.name === "disabled" && state === "disabled" || layer.name === "checked" && checked === "checked";
       if (layer.node.visible !== nextVisible) {
         layer.node.visible = nextVisible;
         changes += 1;
       }
     }
     return { matches: layers.length, changes };
+  }
+  function styleLayerNodes(component, definition, values) {
+    const names = new Set(values.map((value) => value.trim().toLowerCase()));
+    return component.findAll((node) => {
+      const name = normalizedDirectChildName(node);
+      if (!names.has(name)) return false;
+      if (name !== "normal") return true;
+      if (!isChildrenContainer(node.parent)) return false;
+      const hasStyleSibling = node.parent.children.some((sibling) => {
+        const siblingName = normalizedDirectChildName(sibling);
+        return siblingName !== "normal" && names.has(siblingName);
+      });
+      if (!hasStyleSibling) return false;
+      return !definition.State || isChildrenContainer(node) && node.findAll((child) => stateLayerName(child.name) !== null).length > 0;
+    }).map((node) => ({ node, name: normalizedDirectChildName(node) }));
+  }
+  function applyStyleLayerVisibilityForDefinition(layers, definition) {
+    var _a;
+    const style = ((_a = definition.Style) != null ? _a : "").trim().toLowerCase();
+    for (const layer of layers) layer.node.visible = layer.name === style;
   }
   function appendStyleVariants(componentSet, styleMode) {
     const styleValues = variantStyleValues(styleMode);
@@ -964,7 +990,8 @@
     const originalStates = originals.map((original) => ({
       original,
       name: original.name,
-      definition: variantDefinitionFromComponent(original)
+      definition: variantDefinitionFromComponent(original),
+      visibility: snapshotLayerVisibility(original)
     }));
     const clones = [];
     try {
@@ -976,7 +1003,9 @@
             componentSet.appendChild(target);
             clones.push(target);
           }
-          target.name = variantComponentName(__spreadProps(__spreadValues({}, definition), { Style: styleValues[styleIndex] }));
+          const targetDefinition = __spreadProps(__spreadValues({}, definition), { Style: styleValues[styleIndex] });
+          target.name = variantComponentName(targetDefinition);
+          applyStyleLayerVisibilityForDefinition(styleLayerNodes(target, targetDefinition, styleValues), targetDefinition);
         }
       }
       arrangeVariantSet(componentSet);
@@ -986,7 +1015,10 @@
         if (!clone.removed) clone.remove();
       }
       for (const state of originalStates) {
-        if (!state.original.removed) state.original.name = state.name;
+        if (!state.original.removed) {
+          state.original.name = state.name;
+          restoreLayerVisibility(state.visibility);
+        }
       }
       throw new Error(`\u8FFD\u52A0 Style \u53D8\u4F53\u5931\u8D25\uFF1A${errorMessage(error)}`);
     }
